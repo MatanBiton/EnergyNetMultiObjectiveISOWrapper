@@ -1,23 +1,22 @@
 #!/bin/bash
 
-#SBATCH --job-name=mo_sac_test_v2
-#SBATCH --output=slurm_test_%j.out
-#SBATCH --error=slurm_test_%j.err
-#SBATCH --time=04:00:00
+#SBATCH --job-name=mo_sac_quick_test
+#SBATCH --output=slurm_quick_%j.out
+#SBATCH --error=slurm_quick_%j.err
+#SBATCH --time=00:30:00
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
 #SBATCH --mem=16G
 
-# Multi-Objective SAC Testing Script for SLURM (Version 2 - Fixed)
-# This script handles permission and path issues on SLURM clusters
+# Multi-Objective SAC Quick Testing Script for SLURM
+# This script runs a short test to verify everything works
 #
 # Usage: 
-#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh                    # Run comprehensive tests
-#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh CartPole           # Test specific environment
-#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh test_imports       # Test imports only
+#   sbatch -c 4 --gres=gpu:1 ./run_quick_test.sh                    # Quick test
+#   sbatch -c 4 --gres=gpu:1 ./run_quick_test.sh test_imports       # Test imports only
 
 echo "=========================================="
-echo "Multi-Objective SAC Testing Script v2 (SLURM)"
+echo "Multi-Objective SAC Quick Test (SLURM)"
 echo "=========================================="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Job Name: $SLURM_JOB_NAME"
@@ -45,11 +44,6 @@ if [ ! -f "$ORIG_DIR/test_mo_sac.py" ]; then
     exit 1
 fi
 
-# Load necessary modules (uncomment as needed for your cluster)
-# module load python/3.8
-# module load cuda/11.8
-# module load gcc/9.3.0
-
 # Try different Python commands
 PYTHON_CMD=""
 for cmd in python3 python python3.8 python3.9 python3.10; do
@@ -69,9 +63,9 @@ echo "Python version: $($PYTHON_CMD --version)"
 
 # Set up working directory - use SLURM_TMPDIR if available, otherwise create in /tmp
 if [ -n "$SLURM_TMPDIR" ]; then
-    WORK_DIR="$SLURM_TMPDIR/mo_sac_work"
+    WORK_DIR="$SLURM_TMPDIR/mo_sac_quick"
 else
-    WORK_DIR="/tmp/mo_sac_work_${USER}_$$"
+    WORK_DIR="/tmp/mo_sac_quick_${USER}_$$"
 fi
 
 echo "Creating working directory: $WORK_DIR"
@@ -134,40 +128,36 @@ else
     export OMP_NUM_THREADS=4
 fi
 
-# Environment selection and execution
+# Test selection and execution
 if [ $# -eq 0 ]; then
-    echo "Running comprehensive tests on all environments..."
-    echo "This will take a while (30-90 minutes depending on hardware)"
-    echo "Note: Running on CPU will be significantly slower than GPU"
+    echo "Running quick test (CartPole environment only)..."
+    echo "This will take about 5-10 minutes with reduced timesteps"
     echo ""
     
-    $PYTHON_CMD test_mo_sac.py
+    # Run quick test with reduced timesteps
+    $PYTHON_CMD test_mo_sac_quick.py "MultiObjectiveContinuousCartPole-v0"
     
-else
-    ENV_NAME=$1
-    
-    # Special case for import testing
-    if [ "$ENV_NAME" = "test_imports" ]; then
-        echo "Running import tests only..."
-        echo ""
-        $PYTHON_CMD test_imports.py
-        EXIT_CODE=$?
-        echo ""
-        if [ $EXIT_CODE -eq 0 ]; then
-            echo "Import tests completed successfully!"
-        else
-            echo "Import tests failed - check the output above for missing packages"
-        fi
-        
-        # Cleanup and exit early for import test
-        if [[ "$WORK_DIR" == "/tmp/mo_sac_work_${USER}_"* ]]; then
-            echo "Cleaning up temporary directory: $WORK_DIR"
-            rm -rf "$WORK_DIR"
-        fi
-        exit $EXIT_CODE
+elif [ "$1" = "test_imports" ]; then
+    echo "Running import tests only..."
+    echo ""
+    $PYTHON_CMD test_imports.py
+    EXIT_CODE=$?
+    echo ""
+    if [ $EXIT_CODE -eq 0 ]; then
+        echo "Import tests completed successfully!"
+    else
+        echo "Import tests failed - check the output above for missing packages"
     fi
     
-    echo "Running test on environment containing: $ENV_NAME"
+    # Cleanup and exit early for import test
+    if [[ "$WORK_DIR" == "/tmp/mo_sac_quick_${USER}_"* ]]; then
+        echo "Cleaning up temporary directory: $WORK_DIR"
+        rm -rf "$WORK_DIR"
+    fi
+    exit $EXIT_CODE
+else
+    ENV_NAME=$1
+    echo "Running quick test on environment containing: $ENV_NAME"
     echo ""
     
     case $ENV_NAME in
@@ -196,7 +186,7 @@ else
     esac
     
     echo "Testing environment: $FULL_ENV_NAME"
-    $PYTHON_CMD test_mo_sac.py "$FULL_ENV_NAME"
+    $PYTHON_CMD test_mo_sac_quick.py "$FULL_ENV_NAME"
 fi
 
 # Store the exit code
@@ -220,7 +210,7 @@ fi
 if [ $EXIT_CODE -eq 0 ]; then
     echo ""
     echo "=========================================="
-    echo "Testing completed successfully!"
+    echo "Quick test completed successfully!"
     echo "=========================================="
     echo "SLURM Job ID: $SLURM_JOB_ID"
     echo "Results copied back to: $ORIG_DIR"
@@ -230,36 +220,30 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "  - $ORIG_DIR/plots/      (training plots and analysis)" 
     echo "  - $ORIG_DIR/runs/       (tensorboard logs)"
     echo ""
-    echo "To view results:"
-    echo "  ls -la $ORIG_DIR/models/ $ORIG_DIR/plots/ $ORIG_DIR/runs/"
-    echo ""
-    echo "To view tensorboard logs:"
-    echo "  tensorboard --logdir $ORIG_DIR/runs/ --host 0.0.0.0 --port 6006"
+    echo "To run full tests (will take 1-2 hours):"
+    echo "  sbatch --time=04:00:00 -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh"
     echo ""
     echo "SLURM output files:"
-    echo "  - slurm_test_${SLURM_JOB_ID}.out (standard output)"
-    echo "  - slurm_test_${SLURM_JOB_ID}.err (error output)"
+    echo "  - slurm_quick_${SLURM_JOB_ID}.out (standard output)"
+    echo "  - slurm_quick_${SLURM_JOB_ID}.err (error output)"
 else
     echo ""
     echo "=========================================="
-    echo "Testing failed with errors!"
+    echo "Quick test failed with errors!"
     echo "=========================================="
     echo "SLURM Job ID: $SLURM_JOB_ID"
     echo "Exit code: $EXIT_CODE"
-    echo "Check slurm_test_${SLURM_JOB_ID}.err for error details"
+    echo "Check slurm_quick_${SLURM_JOB_ID}.err for error details"
     echo ""
     echo "Working directory contents at failure:"
     ls -la "$WORK_DIR"
     echo ""
-    echo "Common SLURM troubleshooting:"
-    echo "  1. Check job status: squeue -j $SLURM_JOB_ID"
-    echo "  2. Check available modules: module avail"
-    echo "  3. Check Python packages: $PYTHON_CMD -c 'import torch, numpy, gymnasium'"
-    echo "  4. Check file permissions in: $ORIG_DIR"
+    echo "Try running import test first:"
+    echo "  sbatch ./run_quick_test.sh test_imports"
 fi
 
 # Cleanup temporary directory if we created it
-if [[ "$WORK_DIR" == "/tmp/mo_sac_work_${USER}_"* ]]; then
+if [[ "$WORK_DIR" == "/tmp/mo_sac_quick_${USER}_"* ]]; then
     echo "Cleaning up temporary directory: $WORK_DIR"
     rm -rf "$WORK_DIR"
 fi
