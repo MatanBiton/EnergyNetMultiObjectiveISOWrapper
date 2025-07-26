@@ -13,7 +13,13 @@ import time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from multi_objective_sac import MultiObjectiveSAC, train_mo_sac, evaluate_mo_sac
-from mo_sac_testing.test_environments import make_env, get_available_envs
+
+# Import test environments - handle both module and direct import cases
+try:
+    from mo_sac_testing.test_environments import make_env, get_available_envs
+except ImportError:
+    # Fallback for when files are copied to working directory (SLURM case)
+    from test_environments import make_env, get_available_envs
 
 
 def test_single_environment(env_name: str, 

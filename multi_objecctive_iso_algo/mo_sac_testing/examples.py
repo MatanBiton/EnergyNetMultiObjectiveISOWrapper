@@ -13,7 +13,13 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from multi_objective_sac import MultiObjectiveSAC, train_mo_sac, evaluate_mo_sac
-from mo_sac_testing.test_environments import make_env
+
+# Import test environments - handle both module and direct import cases
+try:
+    from mo_sac_testing.test_environments import make_env
+except ImportError:
+    # Fallback for when files are copied to working directory (SLURM case)
+    from test_environments import make_env
 
 
 def example_simple_training():

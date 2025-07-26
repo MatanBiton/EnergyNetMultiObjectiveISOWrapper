@@ -14,6 +14,7 @@
 # Usage: 
 #   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh                    # Run comprehensive tests
 #   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh CartPole           # Test specific environment
+#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac_v2.sh test_imports       # Test imports only
 
 echo "=========================================="
 echo "Multi-Objective SAC Testing Script v2 (SLURM)"
@@ -133,6 +134,28 @@ if [ $# -eq 0 ]; then
     
 else
     ENV_NAME=$1
+    
+    # Special case for import testing
+    if [ "$ENV_NAME" = "test_imports" ]; then
+        echo "Running import tests only..."
+        echo ""
+        $PYTHON_CMD test_imports.py
+        EXIT_CODE=$?
+        echo ""
+        if [ $EXIT_CODE -eq 0 ]; then
+            echo "Import tests completed successfully!"
+        else
+            echo "Import tests failed - check the output above for missing packages"
+        fi
+        
+        # Cleanup and exit early for import test
+        if [[ "$WORK_DIR" == "/tmp/mo_sac_work_${USER}_"* ]]; then
+            echo "Cleaning up temporary directory: $WORK_DIR"
+            rm -rf "$WORK_DIR"
+        fi
+        exit $EXIT_CODE
+    fi
+    
     echo "Running test on environment containing: $ENV_NAME"
     echo ""
     
@@ -156,6 +179,7 @@ else
             echo "  - Mountain (MultiObjectiveMountainCarContinuous-v0)"
             echo "  - Pendulum (MultiObjectivePendulum-v0)"
             echo "  - Lunar (MultiObjectiveLunarLander-v0)"
+            echo "  - test_imports (test imports only)"
             exit 1
             ;;
     esac
