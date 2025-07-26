@@ -46,15 +46,16 @@ def quick_test_environment(env_name: str,
         
         # Create agent with reduced network sizes for faster training
         agent = MultiObjectiveSAC(
-            env.observation_space,
-            env.action_space,
-            num_objectives=num_objectives,
+            state_dim=env.observation_space.shape[0],
+            action_dim=env.action_space.shape[0],
+            reward_dim=num_objectives,
             weights=weights,
             device='cuda' if sys.platform != 'darwin' else 'cpu',
             # Smaller networks for faster testing
-            hidden_dim=128,  # Reduced from default
+            actor_hidden_dims=[128, 128],  # Reduced from default [256, 256]
+            critic_hidden_dims=[128, 128],  # Reduced from default [256, 256]
             batch_size=128,  # Reduced batch size
-            memory_size=10000,  # Reduced memory
+            buffer_capacity=10000,  # Reduced memory
         )
         
         print(f"Agent created with device: {agent.device}")
@@ -62,34 +63,42 @@ def quick_test_environment(env_name: str,
         # Quick training
         start_time = time.time()
         results = train_mo_sac(
-            agent=agent,
             env=env,
+            agent=agent,
             total_timesteps=total_timesteps,
+            learning_starts=max(1000, total_timesteps // 20),  # Start learning earlier
             eval_freq=max(1000, total_timesteps // 10),  # Evaluate less frequently
             save_freq=max(2000, total_timesteps // 5),   # Save less frequently
             verbose=True,
-            log_dir=f"./runs/quick_{env_name}",
-            save_path=f"./models/quick_{env_name}.pth"
+            save_path=f"./models/quick_{env_name}"
         )
         training_time = time.time() - start_time
         
         print(f"\nTraining completed in {training_time:.2f} seconds")
-        print(f"Final episode reward: {results['episode_rewards'][-1]:.4f}")
+        if results['episode_rewards']:
+            final_reward = results['episode_rewards'][-1]
+            print(f"Final episode reward: {final_reward}")
+            print(f"Final scalarized reward: {np.sum(final_reward * agent.weights):.4f}")
+        else:
+            print("No episodes completed during training")
         
         # Quick evaluation
         print("\nRunning quick evaluation...")
         start_time = time.time()
-        eval_results = evaluate_mo_sac(
-            agent=agent,
+        eval_rewards = evaluate_mo_sac(
             env=env,
+            agent=agent,
             num_episodes=3,  # Very quick evaluation
-            render=False
+            verbose=True
         )
         eval_time = time.time() - start_time
         
         print(f"Evaluation completed in {eval_time:.2f} seconds")
-        print(f"Mean evaluation reward: {eval_results['mean_reward']:.4f}")
-        print(f"Std evaluation reward: {eval_results['std_reward']:.4f}")
+        mean_reward = np.mean(eval_rewards, axis=0)
+        std_reward = np.std(eval_rewards, axis=0)
+        print(f"Mean evaluation reward: {mean_reward}")
+        print(f"Std evaluation reward: {std_reward}")
+        print(f"Scalarized mean reward: {np.sum(mean_reward * agent.weights):.4f}")
         
         env.close()
         return True
