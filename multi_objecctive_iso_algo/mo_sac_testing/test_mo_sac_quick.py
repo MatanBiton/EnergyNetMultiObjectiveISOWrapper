@@ -56,6 +56,8 @@ def quick_test_environment(env_name: str,
             critic_hidden_dims=[128, 128],  # Reduced from default [256, 256]
             batch_size=128,  # Reduced batch size
             buffer_capacity=10000,  # Reduced memory
+            verbose=True,  # Enable verbose logging
+            tensorboard_log=f"./runs/quick_{env_name}_{int(time.time())}"  # Enable TensorBoard
         )
         
         print(f"Agent created with device: {agent.device}")
@@ -99,6 +101,105 @@ def quick_test_environment(env_name: str,
         print(f"Mean evaluation reward: {mean_reward}")
         print(f"Std evaluation reward: {std_reward}")
         print(f"Scalarized mean reward: {np.sum(mean_reward * agent.weights):.4f}")
+        
+        # Generate quick plots and save results
+        print("\nGenerating plots and saving results...")
+        try:
+            import matplotlib.pyplot as plt
+            
+            # Create plots directory if it doesn't exist
+            os.makedirs("./plots", exist_ok=True)
+            
+            # Plot training progress
+            if results['episode_rewards']:
+                episodes = range(len(results['episode_rewards']))
+                episode_rewards_array = np.array(results['episode_rewards'])
+                
+                # Plot individual objectives
+                plt.figure(figsize=(12, 8))
+                
+                # Plot each objective
+                for i in range(num_objectives):
+                    plt.subplot(2, 2, i+1)
+                    plt.plot(episodes, episode_rewards_array[:, i])
+                    plt.title(f'Objective {i+1} Rewards')
+                    plt.xlabel('Episode')
+                    plt.ylabel('Reward')
+                    plt.grid(True)
+                
+                # Plot scalarized rewards
+                plt.subplot(2, 2, num_objectives+1)
+                scalarized_rewards = [np.sum(r * agent.weights) for r in episode_rewards_array]
+                plt.plot(episodes, scalarized_rewards)
+                plt.title('Scalarized Rewards')
+                plt.xlabel('Episode')
+                plt.ylabel('Weighted Sum Reward')
+                plt.grid(True)
+                
+                plt.tight_layout()
+                plot_path = f"./plots/quick_{env_name}_training.png"
+                plt.savefig(plot_path)
+                plt.close()
+                print(f"  ✓ Training plot saved to: {plot_path}")
+            
+            # Plot evaluation results
+            if len(eval_rewards) > 0:
+                plt.figure(figsize=(10, 6))
+                
+                # Bar plot of mean rewards for each objective
+                objectives = [f'Obj {i+1}' for i in range(num_objectives)]
+                plt.bar(objectives, mean_reward, yerr=std_reward, capsize=5)
+                plt.title(f'Evaluation Results - {env_name}')
+                plt.ylabel('Mean Reward')
+                plt.grid(True, alpha=0.3)
+                
+                plot_path = f"./plots/quick_{env_name}_evaluation.png"
+                plt.savefig(plot_path)
+                plt.close()
+                print(f"  ✓ Evaluation plot saved to: {plot_path}")
+                
+        except ImportError:
+            print("  ! Matplotlib not available - skipping plots")
+        except Exception as e:
+            print(f"  ! Error generating plots: {e}")
+        
+        # Save training logs
+        try:
+            os.makedirs("./logs", exist_ok=True)
+            
+            log_data = {
+                'environment': env_name,
+                'total_timesteps': total_timesteps,
+                'training_time': training_time,
+                'num_episodes': len(results['episode_rewards']) if results['episode_rewards'] else 0,
+                'final_reward': final_reward.tolist() if results['episode_rewards'] else None,
+                'eval_mean_reward': mean_reward.tolist(),
+                'eval_std_reward': std_reward.tolist(),
+                'scalarized_final_reward': np.sum(final_reward * agent.weights) if results['episode_rewards'] else None,
+                'scalarized_eval_reward': np.sum(mean_reward * agent.weights),
+                'weights': agent.weights.tolist(),
+                'agent_config': {
+                    'actor_hidden_dims': [128, 128],
+                    'critic_hidden_dims': [128, 128],
+                    'batch_size': 128,
+                    'buffer_capacity': 10000,
+                    'device': str(agent.device)
+                }
+            }
+            
+            import json
+            log_path = f"./logs/quick_{env_name}_{int(time.time())}.json"
+            with open(log_path, 'w') as f:
+                json.dump(log_data, f, indent=2)
+            print(f"  ✓ Training log saved to: {log_path}")
+            
+        except Exception as e:
+            print(f"  ! Error saving logs: {e}")
+        
+        # Close TensorBoard writer
+        if hasattr(agent, 'writer') and agent.writer:
+            agent.writer.close()
+            print(f"  ✓ TensorBoard logs saved to: ./runs/quick_{env_name}_*")
         
         env.close()
         return True
@@ -189,6 +290,21 @@ def main():
     
     if success_count == len(test_envs):
         print("🎉 All tests PASSED! MO-SAC is working correctly.")
+        print("\nGenerated files:")
+        
+        # Check what files were actually created
+        for directory in ['models', 'plots', 'logs', 'runs']:
+            if os.path.exists(f"./{directory}"):
+                files = os.listdir(f"./{directory}")
+                if files:
+                    print(f"  📁 ./{directory}/")
+                    for file in sorted(files):
+                        print(f"    📄 {file}")
+                else:
+                    print(f"  📁 ./{directory}/ (empty)")
+            else:
+                print(f"  ❌ ./{directory}/ (not created)")
+        
         print("\nTo run full tests (slower but more comprehensive):")
         print("  python test_mo_sac.py")
         return True
