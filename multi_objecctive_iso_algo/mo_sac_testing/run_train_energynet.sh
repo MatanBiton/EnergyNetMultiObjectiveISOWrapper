@@ -1,47 +1,115 @@
 #!/bin/bash
 
-# Multi-Objective SAC Training Script for EnergyNet MoISO Environment
+#SBATCH --job-name=mo_sac_energynet
+#SBATCH --output=slurm_train_%j.out
+#SBATCH --error=slurm_train_%j.err
+#SBATCH --time=08:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:1
+#SBATCH --mem=32G
+
+# Multi-Objective SAC Training Script for EnergyNet MoISO Environment (SLURM)
 # This script trains the MO-SAC algorithm on the EnergyNet Multi-Objective ISO environment
 #
-# Usage: ./run_train_energynet.sh [OPTIONS]
-# 
-# Examples:
-#   ./run_train_energynet.sh                    # Run with default parameters
-#   ./run_train_energynet.sh --quick-test       # Quick test run (shorter training)
-#   ./run_train_energynet.sh --cost-priority    # Prioritize cost reduction over stability
-#   ./run_train_energynet.sh --stability-priority # Prioritize stability over cost
+# Usage: 
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet.sh                    # Default parameters
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet.sh --quick-test       # Quick test run
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet.sh --cost-priority    # Prioritize cost
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet.sh --stability-priority # Prioritize stability
 
 echo "=========================================="
-echo "MO-SAC EnergyNet Training Script"
+echo "MO-SAC EnergyNet Training Script (SLURM)"
 echo "=========================================="
+echo "Job ID: $SLURM_JOB_ID"
+echo "Job Name: $SLURM_JOB_NAME"
+echo "Node: $SLURM_NODELIST"
+echo "CPUs: $SLURM_CPUS_PER_TASK"
+echo "GPUs: $CUDA_VISIBLE_DEVICES"
+echo "Memory: $SLURM_MEM_PER_NODE MB"
+echo "Time Limit: $SLURM_TIMELIMIT"
+echo "=========================================="
+
+# Load necessary modules (uncomment and modify as needed for your cluster)
+# module load python/3.8
+# module load cuda/11.8
+# module load gcc/9.3.0
+# module load pytorch/1.12.0
 
 # Set the working directory to the script location
 cd "$(dirname "$0")"
+echo "Working directory: $(pwd)"
 
-# Check if Python is available
-if ! command -v python &> /dev/null; then
-    echo "Error: Python is not installed or not in PATH"
+# Try different Python commands (clusters may have different setups)
+PYTHON_CMD=""
+for cmd in python3 python python3.8 python3.9 python3.10; do
+    if command -v $cmd &> /dev/null; then
+        PYTHON_CMD=$cmd
+        echo "Found Python: $PYTHON_CMD ($(which $cmd))"
+        break
+    fi
+done
+
+if [ -z "$PYTHON_CMD" ]; then
+    echo "Error: No Python interpreter found"
+    echo "Tried: python3, python, python3.8, python3.9, python3.10"
     exit 1
 fi
 
-# Check if required packages are installed
+# Check Python version and key packages
+echo "Python version: $($PYTHON_CMD --version)"
+echo "Checking key packages..."
+$PYTHON_CMD -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')" 2>/dev/null || echo "PyTorch not available"
+
+# Check if required packages are installed (commented out for cluster - assume pre-installed)
 # echo "Checking dependencies..."
-# python -c "import torch, numpy, gymnasium, matplotlib, tensorboard" 2>/dev/null
+# $PYTHON_CMD -c "import torch, numpy, gymnasium, matplotlib, tensorboard" 2>/dev/null
 # if [ $? -ne 0 ]; then
-#     echo "Warning: Some required packages might be missing. Installing..."
-#     pip install -r requirements.txt
+#     echo "Warning: Some required packages might be missing."
+#     echo "On clusters, packages should be pre-installed or loaded via modules."
+#     echo "Contact your system administrator if packages are missing."
 # fi
 
-# Create necessary directories
+# Create necessary directories with proper permissions
 echo "Creating output directories..."
 mkdir -p energynet_experiments
 mkdir -p energynet_experiments/models
 mkdir -p energynet_experiments/logs
 mkdir -p energynet_experiments/plots
+chmod 755 energynet_experiments energynet_experiments/models energynet_experiments/logs energynet_experiments/plots 2>/dev/null || true
 
-# Set environment variables for better performance (optional)
-export CUDA_VISIBLE_DEVICES=0  # Use first GPU if available, comment out to use CPU only
-export OMP_NUM_THREADS=4       # Number of CPU threads for PyTorch
+# SLURM environment setup
+if [ -n "$SLURM_JOB_ID" ]; then
+    echo "Running under SLURM job manager"
+    
+    # Use SLURM allocated resources
+    if [ -n "$SLURM_CPUS_PER_TASK" ]; then
+        export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+        echo "Set OMP_NUM_THREADS to $SLURM_CPUS_PER_TASK"
+    else
+        export OMP_NUM_THREADS=4
+    fi
+    
+    # GPU setup - SLURM should set CUDA_VISIBLE_DEVICES automatically
+    if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
+        echo "GPU devices: $CUDA_VISIBLE_DEVICES"
+        # Check GPU availability
+        if command -v nvidia-smi &> /dev/null; then
+            echo "GPU Status:"
+            nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv,noheader,nounits
+        fi
+    else
+        echo "No GPU devices allocated"
+    fi
+    
+    # Set memory limits if available
+    if [ -n "$SLURM_MEM_PER_NODE" ]; then
+        echo "Memory limit: $SLURM_MEM_PER_NODE MB"
+    fi
+else
+    echo "Not running under SLURM"
+    # Fallback for non-SLURM environments
+    export OMP_NUM_THREADS=4
+fi
 
 # Parse command line arguments for quick configurations
 QUICK_TEST=false
@@ -113,40 +181,30 @@ echo "  Weights: $WEIGHTS"
 echo ""
 
 # Run the training with all configurable parameters
-python train_energynet.py \
-    `# Experiment Configuration` \
+$PYTHON_CMD train_energynet.py \
     --experiment-name "$EXP_NAME" \
     --save-dir "energynet_experiments" \
     \
-    `# Training Parameters - Modify these to change training behavior` \
     --total-timesteps $TOTAL_TIMESTEPS \
     --learning-starts $LEARNING_STARTS \
     --eval-freq $EVAL_FREQ \
     --save-freq $SAVE_FREQ \
     \
-    `# Multi-Objective Weights - [cost_weight, stability_weight] must sum to 1.0` \
     --weights $WEIGHTS \
     \
-    `# Network Learning Rates - Decrease if training is unstable, increase if learning is slow` \
     --actor-lr 3e-4 \
     --critic-lr 3e-4 \
     --alpha-lr 3e-4 \
     \
-    `# SAC Algorithm Parameters` \
-    --gamma 0.99 \        # Discount factor (0.9-0.999)
-    --tau 0.005 \         # Target network update rate (0.001-0.01)
+    --gamma 0.99 \
+    --tau 0.005 \
     \
-    `# Experience Replay Configuration` \
-    --buffer-size 1000000 \  # Replay buffer size (larger = more stable but more memory)
-    --batch-size 256 \       # Training batch size (64-512, larger = more stable)
+    --buffer-size 1000000 \
+    --batch-size 256 \
     \
-    `# Environment Configuration` \
-    --dispatch-strategy "PROPORTIONAL" \  # Dispatch strategy: PROPORTIONAL, EQUAL, etc.
-    `# --use-dispatch-action \`           # Uncomment to enable dispatch actions
+    --dispatch-strategy "PROPORTIONAL" \
     \
-    `# Logging Configuration` \
-    --verbose \              # Enable detailed logging
-    `# --no-tensorboard \`   # Uncomment to disable tensorboard logging
+    --verbose
 
 # Store the exit code
 EXIT_CODE=$?
@@ -157,6 +215,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "=========================================="
     echo "Training completed successfully!"
     echo "=========================================="
+    echo "SLURM Job ID: $SLURM_JOB_ID"
     echo "Results saved in: energynet_experiments/"
     echo ""
     echo "Files created:"
@@ -165,21 +224,21 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "  - energynet_experiments/models/${EXP_NAME}_final.pth (trained model)"
     echo "  - energynet_experiments/logs/                      (tensorboard logs)"
     echo ""
-    echo "To view training progress:"
-    echo "  tensorboard --logdir energynet_experiments/logs/"
+    echo "SLURM output files:"
+    echo "  - slurm_train_${SLURM_JOB_ID}.out (standard output)"
+    echo "  - slurm_train_${SLURM_JOB_ID}.err (error output)"
     echo ""
-    echo "To load and evaluate the trained model:"
-    echo "  python -c \""
-    echo "    from multi_objective_sac import MultiObjectiveSAC"
-    echo "    agent = MultiObjectiveSAC(...)"
-    echo "    agent.load('energynet_experiments/models/${EXP_NAME}_final.pth')"
-    echo "  \""
+    echo "To view training progress (after job completion):"
+    echo "  tensorboard --logdir energynet_experiments/logs/ --host 0.0.0.0 --port 6006"
+    echo ""
+    echo "To download results from cluster:"
+    echo "  scp -r username@cluster:path/to/energynet_experiments ."
     echo ""
     echo "Parameter Tuning Tips:"
     echo "  - If learning is slow: increase learning rates (--actor-lr, --critic-lr)"
     echo "  - If training is unstable: decrease learning rates or increase --tau"
     echo "  - For different objectives: adjust --weights [cost_weight stability_weight]"
-    echo "  - For longer training: increase --total-timesteps"
+    echo "  - For longer training: increase --total-timesteps and SLURM time limit"
     echo "  - For more evaluation: decrease --eval-freq"
     
 else
@@ -187,33 +246,41 @@ else
     echo "=========================================="
     echo "Training failed with errors!"
     echo "=========================================="
+    echo "SLURM Job ID: $SLURM_JOB_ID"
     echo "Exit code: $EXIT_CODE"
+    echo "Check slurm_train_${SLURM_JOB_ID}.err for error details"
     echo ""
-    echo "Common troubleshooting:"
-    echo "  1. Check that EnergyNet environment is properly installed"
-    echo "  2. Verify all dependencies are installed: pip install -r requirements.txt"
-    echo "  3. Check CUDA availability if using GPU: python -c 'import torch; print(torch.cuda.is_available())'"
-    echo "  4. Try running with --quick-test flag for faster debugging"
-    echo "  5. Check the error messages above for specific issues"
-    
-    exit $EXIT_CODE
+    echo "Common SLURM troubleshooting:"
+    echo "  1. Check job status: squeue -j $SLURM_JOB_ID"
+    echo "  2. Check job details: scontrol show job $SLURM_JOB_ID"
+    echo "  3. Check node resources: sinfo -N -l"
+    echo "  4. Check available GPUs: nvidia-smi"
+    echo "  5. Verify module loads and Python environment"
+    echo "  6. Check disk space: df -h"
+    echo "  7. Check memory usage: free -h"
+    echo ""
+    echo "Try running with --quick-test flag for faster debugging"
 fi
 
-# Additional analysis suggestions
+exit $EXIT_CODE
+
+# Additional analysis suggestions for post-processing
 echo ""
-echo "Analysis Suggestions:"
-echo "========================"
-echo "1. Compare different weight configurations:"
-echo "   ./run_train_energynet.sh --cost-priority"
-echo "   ./run_train_energynet.sh --stability-priority"
+echo "Post-Job Analysis Commands:"
+echo "==========================="
+echo "1. Check job efficiency:"
+echo "   seff $SLURM_JOB_ID"
 echo ""
-echo "2. Monitor training in real-time:"
+echo "2. View job accounting:"
+echo "   sacct -j $SLURM_JOB_ID --format=JobID,JobName,MaxRSS,Elapsed,CPUTime,AveCPU"
+echo ""
+echo "3. Monitor training progress:"
 echo "   tensorboard --logdir energynet_experiments/logs/ --host 0.0.0.0"
 echo ""
-echo "3. Run multiple seeds for statistical significance:"
-echo "   for i in {1..5}; do ./run_train_energynet.sh; done"
-echo ""
-echo "4. Hyperparameter tuning experiments:"
-echo "   - Try different learning rates: 1e-4, 5e-4, 1e-3"
-echo "   - Try different network sizes by modifying the script"
-echo "   - Try different discount factors: 0.95, 0.99, 0.995"
+echo "4. Compare different runs:"
+echo "   python -c \""
+echo "   import json"
+echo "   with open('energynet_experiments/${EXP_NAME}_results.json') as f:"
+echo "       results = json.load(f)"
+echo "   print('Final performance:', results['final_evaluation'])"
+echo "   \""

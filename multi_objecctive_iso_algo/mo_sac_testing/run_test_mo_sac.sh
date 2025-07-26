@@ -1,43 +1,103 @@
 #!/bin/bash
 
-# Multi-Objective SAC Testing Script
+#SBATCH --job-name=mo_sac_test
+#SBATCH --output=slurm_test_%j.out
+#SBATCH --error=slurm_test_%j.err
+#SBATCH --time=02:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:1
+#SBATCH --mem=16G
+
+# Multi-Objective SAC Testing Script for SLURM
 # This script runs comprehensive tests on all available test environments
 # 
 # Usage: 
-#   ./run_test_mo_sac.sh                    # Run comprehensive tests on all environments
-#   ./run_test_mo_sac.sh CartPole           # Test specific environment (partial name match)
-#   ./run_test_mo_sac.sh Pendulum           # Test specific environment (partial name match)
+#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac.sh                    # Run comprehensive tests
+#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac.sh CartPole           # Test specific environment
+#   sbatch -c 4 --gres=gpu:1 ./run_test_mo_sac.sh Pendulum           # Test specific environment
 
 echo "=========================================="
-echo "Multi-Objective SAC Testing Script"
+echo "Multi-Objective SAC Testing Script (SLURM)"
 echo "=========================================="
+echo "Job ID: $SLURM_JOB_ID"
+echo "Job Name: $SLURM_JOB_NAME"
+echo "Node: $SLURM_NODELIST"
+echo "CPUs: $SLURM_CPUS_PER_TASK"
+echo "GPUs: $CUDA_VISIBLE_DEVICES"
+echo "Memory: $SLURM_MEM_PER_NODE MB"
+echo "=========================================="
+
+# Load necessary modules (uncomment as needed for your cluster)
+# module load python/3.8
+# module load cuda/11.8
+# module load gcc/9.3.0
 
 # Set the working directory to the script location
 cd "$(dirname "$0")"
+echo "Working directory: $(pwd)"
 
-# Check if Python is available
-if ! command -v python &> /dev/null; then
-    echo "Error: Python is not installed or not in PATH"
+# Try different Python commands (clusters may have different setups)
+PYTHON_CMD=""
+for cmd in python3 python python3.8 python3.9 python3.10; do
+    if command -v $cmd &> /dev/null; then
+        PYTHON_CMD=$cmd
+        echo "Found Python: $PYTHON_CMD ($(which $cmd))"
+        break
+    fi
+done
+
+if [ -z "$PYTHON_CMD" ]; then
+    echo "Error: No Python interpreter found"
+    echo "Tried: python3, python, python3.8, python3.9, python3.10"
     exit 1
 fi
 
-# Check if required packages are installed
+# Check Python version
+echo "Python version: $($PYTHON_CMD --version)"
+
+# Check if required packages are installed (commented out for cluster - assume pre-installed)
 # echo "Checking dependencies..."
-# python -c "import torch, numpy, gymnasium, matplotlib" 2>/dev/null
+# $PYTHON_CMD -c "import torch, numpy, gymnasium, matplotlib" 2>/dev/null
 # if [ $? -ne 0 ]; then
-#     echo "Warning: Some required packages might be missing. Installing..."
-#     pip install -r requirements.txt
+#     echo "Warning: Some required packages might be missing."
+#     echo "On clusters, packages should be pre-installed or loaded via modules."
+#     echo "Contact your system administrator if packages are missing."
 # fi
 
-# Create necessary directories
+# Create necessary directories with proper permissions
 echo "Creating output directories..."
-mkdir -p models
-mkdir -p plots
-mkdir -p logs
+mkdir -p models plots logs
+chmod 755 models plots logs 2>/dev/null || true
 
-# Set environment variables for better performance (optional)
-export CUDA_VISIBLE_DEVICES=0  # Use first GPU if available, comment out to use CPU
-export OMP_NUM_THREADS=4       # Number of CPU threads for PyTorch
+# SLURM environment setup
+if [ -n "$SLURM_JOB_ID" ]; then
+    echo "Running under SLURM job manager"
+    
+    # Use SLURM allocated resources
+    if [ -n "$SLURM_CPUS_PER_TASK" ]; then
+        export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+        echo "Set OMP_NUM_THREADS to $SLURM_CPUS_PER_TASK"
+    else
+        export OMP_NUM_THREADS=4
+    fi
+    
+    # GPU setup - SLURM should set CUDA_VISIBLE_DEVICES automatically
+    if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
+        echo "GPU devices: $CUDA_VISIBLE_DEVICES"
+    else
+        echo "No GPU devices allocated"
+    fi
+    
+    # Set memory limits if available
+    if [ -n "$SLURM_MEM_PER_NODE" ]; then
+        echo "Memory limit: $SLURM_MEM_PER_NODE MB"
+    fi
+else
+    echo "Not running under SLURM"
+    # Fallback for non-SLURM environments
+    export OMP_NUM_THREADS=4
+    # Don't set CUDA_VISIBLE_DEVICES - let system handle it
+fi
 
 # Environment selection
 if [ $# -eq 0 ]; then
@@ -46,7 +106,7 @@ if [ $# -eq 0 ]; then
     echo ""
     
     # Run comprehensive tests with default parameters
-    python test_mo_sac.py
+    $PYTHON_CMD test_mo_sac.py
     
 else
     # Run test on specific environment (partial name matching)
@@ -86,30 +146,48 @@ else
     esac
     
     echo "Testing environment: $FULL_ENV_NAME"
-    python test_mo_sac.py "$FULL_ENV_NAME"
+    $PYTHON_CMD test_mo_sac.py "$FULL_ENV_NAME"
 fi
 
+# Store the exit code
+EXIT_CODE=$?
+
 # Check if the script completed successfully
-if [ $? -eq 0 ]; then
+if [ $EXIT_CODE -eq 0 ]; then
     echo ""
     echo "=========================================="
     echo "Testing completed successfully!"
     echo "=========================================="
+    echo "SLURM Job ID: $SLURM_JOB_ID"
     echo "Results saved in:"
     echo "  - models/     (trained model files)"
     echo "  - plots/      (training plots and analysis)"
     echo "  - runs/       (tensorboard logs)"
     echo ""
-    echo "To view tensorboard logs:"
-    echo "  tensorboard --logdir runs/"
+    echo "To view results after job completion:"
+    echo "  ls -la models/ plots/ runs/"
     echo ""
-    echo "To view plots:"
-    echo "  ls plots/*.png"
+    echo "To view tensorboard logs:"
+    echo "  tensorboard --logdir runs/ --host 0.0.0.0 --port 6006"
+    echo ""
+    echo "SLURM output files:"
+    echo "  - slurm_test_${SLURM_JOB_ID}.out (standard output)"
+    echo "  - slurm_test_${SLURM_JOB_ID}.err (error output)"
 else
     echo ""
     echo "=========================================="
     echo "Testing failed with errors!"
     echo "=========================================="
-    echo "Check the error messages above for troubleshooting."
-    exit 1
+    echo "SLURM Job ID: $SLURM_JOB_ID"
+    echo "Exit code: $EXIT_CODE"
+    echo "Check slurm_test_${SLURM_JOB_ID}.err for error details"
+    echo ""
+    echo "Common SLURM troubleshooting:"
+    echo "  1. Check job status: squeue -j $SLURM_JOB_ID"
+    echo "  2. Check job details: scontrol show job $SLURM_JOB_ID"
+    echo "  3. Check node resources: sinfo -N -l"
+    echo "  4. Check available GPUs: nvidia-smi"
+    echo "  5. Verify module loads and Python environment"
 fi
+
+exit $EXIT_CODE
