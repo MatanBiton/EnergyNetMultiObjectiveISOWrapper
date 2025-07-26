@@ -36,8 +36,17 @@ echo "=========================================="
 # module load pytorch/1.12.0
 
 # Set the working directory to the script location
-cd "$(dirname "$0")"
-echo "Working directory: $(pwd)"
+SCRIPT_DIR="$(dirname "$0")"
+SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"  # Get absolute path
+echo "Script directory: $SCRIPT_DIR"
+
+# Make sure we can find the Python files
+if [ ! -f "$SCRIPT_DIR/train_energynet.py" ]; then
+    echo "Error: train_energynet.py not found in $SCRIPT_DIR"
+    echo "Directory contents:"
+    ls -la "$SCRIPT_DIR"
+    exit 1
+fi
 
 # Try different Python commands (clusters may have different setups)
 PYTHON_CMD=""
@@ -69,13 +78,44 @@ $PYTHON_CMD -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CU
 #     echo "Contact your system administrator if packages are missing."
 # fi
 
-# Create necessary directories with proper permissions
+# Create necessary directories with proper permissions in a writable location
 echo "Creating output directories..."
-mkdir -p energynet_experiments
-mkdir -p energynet_experiments/models
-mkdir -p energynet_experiments/logs
-mkdir -p energynet_experiments/plots
-chmod 755 energynet_experiments energynet_experiments/models energynet_experiments/logs energynet_experiments/plots 2>/dev/null || true
+
+# Use SLURM_TMPDIR if available (typically writable), otherwise use current directory
+if [ -n "$SLURM_TMPDIR" ]; then
+    WORK_DIR="$SLURM_TMPDIR/energynet_experiments"
+    echo "Using SLURM temporary directory: $WORK_DIR"
+    mkdir -p "$WORK_DIR"/{models,logs,plots}
+    cd "$WORK_DIR"
+    
+    # Copy necessary files to working directory
+    cp "$SCRIPT_DIR"/*.py "$WORK_DIR/" 2>/dev/null || true
+    cp -r "$SCRIPT_DIR"/../*.py "$WORK_DIR/" 2>/dev/null || true  # Copy parent directory files
+    cp -r "$SCRIPT_DIR"/../EnergyNetMoISO" "$WORK_DIR/" 2>/dev/null || true  # Copy EnergyNet module
+    
+    # Set up symbolic links back to original location for results
+    ln -sf "$WORK_DIR" "$SCRIPT_DIR/energynet_experiments" 2>/dev/null || true
+    
+else
+    # Try to create in current directory, with fallback to /tmp
+    if ! mkdir -p energynet_experiments/{models,logs,plots} 2>/dev/null; then
+        echo "Cannot create directories in current location, using /tmp"
+        WORK_DIR="/tmp/energynet_experiments_${USER}_$$"
+        mkdir -p "$WORK_DIR"/{models,logs,plots}
+        cd "$WORK_DIR"
+        
+        # Copy necessary files
+        cp "$SCRIPT_DIR"/*.py "$WORK_DIR/" 2>/dev/null || true
+        cp -r "$SCRIPT_DIR"/../*.py "$WORK_DIR/" 2>/dev/null || true
+        cp -r "$SCRIPT_DIR"/../EnergyNetMoISO" "$WORK_DIR/" 2>/dev/null || true
+    else
+        WORK_DIR="$SCRIPT_DIR"
+        cd "$SCRIPT_DIR"
+    fi
+fi
+
+echo "Working directory: $WORK_DIR"
+echo "Contents: $(ls -la)"
 
 # SLURM environment setup
 if [ -n "$SLURM_JOB_ID" ]; then
@@ -181,7 +221,7 @@ echo "  Weights: $WEIGHTS"
 echo ""
 
 # Run the training with all configurable parameters
-$PYTHON_CMD train_energynet.py \
+$PYTHON_CMD "$SCRIPT_DIR/train_energynet.py" \
     --experiment-name "$EXP_NAME" \
     --save-dir "energynet_experiments" \
     \
@@ -208,6 +248,13 @@ $PYTHON_CMD train_energynet.py \
 
 # Store the exit code
 EXIT_CODE=$?
+
+# Copy results back to original directory if we used a temporary location
+if [ "$WORK_DIR" != "$SCRIPT_DIR" ] && [ -n "$WORK_DIR" ] && [ "$WORK_DIR" != "/tmp/energynet_experiments_${USER}_$$" ]; then
+    echo "Copying results back to original directory..."
+    cp -r "$WORK_DIR/energynet_experiments" "$SCRIPT_DIR/" 2>/dev/null || true
+    echo "Results copied to: $SCRIPT_DIR/energynet_experiments"
+fi
 
 # Report results
 if [ $EXIT_CODE -eq 0 ]; then

@@ -33,8 +33,17 @@ echo "=========================================="
 # module load gcc/9.3.0
 
 # Set the working directory to the script location
-cd "$(dirname "$0")"
-echo "Working directory: $(pwd)"
+SCRIPT_DIR="$(dirname "$0")"
+SCRIPT_DIR="$(cd "$SCRIPT_DIR" && pwd)"  # Get absolute path
+echo "Script directory: $SCRIPT_DIR"
+
+# Make sure we can find the Python files
+if [ ! -f "$SCRIPT_DIR/test_mo_sac.py" ]; then
+    echo "Error: test_mo_sac.py not found in $SCRIPT_DIR"
+    echo "Directory contents:"
+    ls -la "$SCRIPT_DIR"
+    exit 1
+fi
 
 # Try different Python commands (clusters may have different setups)
 PYTHON_CMD=""
@@ -64,10 +73,41 @@ echo "Python version: $($PYTHON_CMD --version)"
 #     echo "Contact your system administrator if packages are missing."
 # fi
 
-# Create necessary directories with proper permissions
+# Create necessary directories with proper permissions in a writable location
 echo "Creating output directories..."
-mkdir -p models plots logs
-chmod 755 models plots logs 2>/dev/null || true
+
+# Use SLURM_TMPDIR if available (typically writable), otherwise use current directory
+if [ -n "$SLURM_TMPDIR" ]; then
+    WORK_DIR="$SLURM_TMPDIR/mo_sac_results"
+    echo "Using SLURM temporary directory: $WORK_DIR"
+    mkdir -p "$WORK_DIR"/{models,plots,logs}
+    cd "$WORK_DIR"
+    
+    # Copy necessary files to working directory
+    cp "$SCRIPT_DIR"/*.py "$WORK_DIR/" 2>/dev/null || true
+    
+    # Set up symbolic links back to original location for results
+    ln -sf "$WORK_DIR/models" "$SCRIPT_DIR/models" 2>/dev/null || true
+    ln -sf "$WORK_DIR/plots" "$SCRIPT_DIR/plots" 2>/dev/null || true
+    ln -sf "$WORK_DIR/logs" "$SCRIPT_DIR/logs" 2>/dev/null || true
+    
+else
+    # Try to create in current directory, with fallback to /tmp
+    if ! mkdir -p models plots logs 2>/dev/null; then
+        echo "Cannot create directories in current location, using /tmp"
+        WORK_DIR="/tmp/mo_sac_results_${USER}_$$"
+        mkdir -p "$WORK_DIR"/{models,plots,logs}
+        cd "$WORK_DIR"
+        
+        # Copy necessary files
+        cp "$SCRIPT_DIR"/*.py "$WORK_DIR/" 2>/dev/null || true
+    else
+        WORK_DIR="$(pwd)"
+    fi
+fi
+
+echo "Working directory: $WORK_DIR"
+echo "Contents: $(ls -la)"
 
 # SLURM environment setup
 if [ -n "$SLURM_JOB_ID" ]; then
@@ -106,7 +146,7 @@ if [ $# -eq 0 ]; then
     echo ""
     
     # Run comprehensive tests with default parameters
-    $PYTHON_CMD test_mo_sac.py
+    $PYTHON_CMD "$SCRIPT_DIR/test_mo_sac.py"
     
 else
     # Run test on specific environment (partial name matching)
@@ -146,11 +186,18 @@ else
     esac
     
     echo "Testing environment: $FULL_ENV_NAME"
-    $PYTHON_CMD test_mo_sac.py "$FULL_ENV_NAME"
+    $PYTHON_CMD "$SCRIPT_DIR/test_mo_sac.py" "$FULL_ENV_NAME"
 fi
 
 # Store the exit code
 EXIT_CODE=$?
+
+# Copy results back to original directory if we used a temporary location
+if [ "$WORK_DIR" != "$SCRIPT_DIR" ] && [ -n "$WORK_DIR" ]; then
+    echo "Copying results back to original directory..."
+    cp -r "$WORK_DIR"/{models,plots,logs} "$SCRIPT_DIR/" 2>/dev/null || true
+    echo "Results copied to: $SCRIPT_DIR"
+fi
 
 # Check if the script completed successfully
 if [ $EXIT_CODE -eq 0 ]; then
