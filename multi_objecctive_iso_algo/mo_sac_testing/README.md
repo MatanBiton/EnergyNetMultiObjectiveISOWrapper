@@ -79,6 +79,41 @@ python train_energynet.py --experiment-name my_experiment \
                          --verbose
 ```
 
+### SLURM Training (Single Run)
+
+```bash
+# Basic SLURM training with GPU
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
+
+# Custom experiment with optimizations
+ENABLE_ALL_OPTIMIZATIONS=true \
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh my_experiment 500000
+```
+
+### Multi-Seed Training (Robust Testing)
+
+For statistically robust results, use the multi-seed wrapper that runs the same experiment with 5 different seeds:
+
+```bash
+# Basic multi-seed training (5 seeds automatically)
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2_multiseed.sh
+
+# Custom experiment name with 5 seeds
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2_multiseed.sh robust_test
+
+# With optimizations across 5 seeds
+ENABLE_ALL_OPTIMIZATIONS=true \
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2_multiseed.sh optimized_robust 500000
+```
+
+**Multi-seed benefits:**
+- Runs 5 experiments with seeds: 42, 123, 456, 789, 1337
+- Generates experiments: `my_experiment_1`, `my_experiment_2`, ..., `my_experiment_5`
+- Provides statistical robustness for performance claims
+- Creates comprehensive summary with success/failure rates
+
+📖 **See [README_MULTISEED.md](README_MULTISEED.md) for detailed multi-seed usage guide**
+
 ### Training Parameters
 
 #### Environment Parameters
@@ -141,11 +176,15 @@ The Multi-Objective SAC algorithm extends the standard SAC algorithm to handle m
 ```
 mo_sac_testing/
 ├── __init__.py
-├── test_environments.py    # Multi-objective test environments
-├── test_mo_sac.py         # Comprehensive testing script
-├── train_energynet.py     # EnergyNet-specific training
-├── requirements.txt       # Dependencies
-└── README.md             # This file
+├── test_environments.py              # Multi-objective test environments
+├── test_mo_sac.py                   # Comprehensive testing script
+├── train_energynet.py               # EnergyNet-specific training
+├── run_train_energynet_v2.sh        # SLURM single-run training script
+├── run_train_energynet_v2_multiseed.sh  # SLURM multi-seed training wrapper
+├── requirements.txt                 # Dependencies
+├── README.md                       # This file
+├── README_MULTISEED.md             # Multi-seed training guide
+└── other_utility_scripts.sh        # Various helper scripts
 ```
 
 ## Example: Weight Sensitivity Analysis
@@ -228,4 +267,3 @@ When adding new test environments:
 
 - [Soft Actor-Critic (SAC)](https://arxiv.org/abs/1801.01290)
 - [Multi-Objective Reinforcement Learning](https://link.springer.com/article/10.1007/s10994-013-5373-6)
-- [EnergyNet Environment](https://github.com/YuzhongMa/EnergyNet)
