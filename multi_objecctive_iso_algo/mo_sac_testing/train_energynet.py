@@ -117,8 +117,9 @@ def train_mo_sac_on_energynet(
     else:
         print(f"  Using provided weights: {weights}")
     
-    # Create agent
-    tensorboard_path = f"{logs_dir}/{experiment_name}_{int(time.time())}" if tensorboard_log else None
+    # Create agent with timestamp for consistent naming
+    timestamp = int(time.time())
+    tensorboard_path = f"{logs_dir}/{experiment_name}_{timestamp}" if tensorboard_log else None
     
     agent = MultiObjectiveSAC(
         state_dim=state_dim,
@@ -178,7 +179,7 @@ def train_mo_sac_on_energynet(
         }
     }
     
-    with open(f"{base_dir}/{experiment_name}_config.json", 'w') as f:
+    with open(f"{base_dir}/{experiment_name}_{timestamp}_config.json", 'w') as f:
         json.dump(config, f, indent=2)
     
     # Train agent
@@ -197,7 +198,7 @@ def train_mo_sac_on_energynet(
         eval_freq=eval_freq,
         eval_episodes=eval_episodes,
         save_freq=save_freq,
-        save_path=f"{models_dir}/{experiment_name}",
+        save_path=f"{models_dir}/{experiment_name}_{timestamp}",
         verbose=verbose
     )
     
@@ -222,7 +223,7 @@ def train_mo_sac_on_energynet(
     print(f"  Scalarized reward: {np.mean(scalarized_rewards):.3f} ± {np.std(scalarized_rewards):.3f}")
     
     # Save final model and results
-    final_model_path = f"{models_dir}/{experiment_name}_final.pth"
+    final_model_path = f"{models_dir}/{experiment_name}_{timestamp}_final.pth"
     agent.save(final_model_path)
     
     results = {
@@ -245,12 +246,12 @@ def train_mo_sac_on_energynet(
     }
     
     # Save results
-    with open(f"{base_dir}/{experiment_name}_results.json", 'w') as f:
+    with open(f"{base_dir}/{experiment_name}_{timestamp}_results.json", 'w') as f:
         json.dump(results, f, indent=2)
     
     print(f"\nResults saved:")
-    print(f"  Config: {base_dir}/{experiment_name}_config.json")
-    print(f"  Results: {base_dir}/{experiment_name}_results.json")
+    print(f"  Config: {base_dir}/{experiment_name}_{timestamp}_config.json")
+    print(f"  Results: {base_dir}/{experiment_name}_{timestamp}_results.json")
     print(f"  Final model: {final_model_path}")
     if tensorboard_path:
         print(f"  Tensorboard logs: {tensorboard_path}")
