@@ -10,8 +10,22 @@ from typing import Dict, Any
 import time
 import json
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add paths for imports - handle both original and SLURM temporary directory cases
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(parent_dir)
+
+# Add current directory (for when files are copied to temp dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Add parent directory (for multi_objective_sac.py)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# Add root directory (for EnergyNetMoISO package)
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
 
 from multi_objective_sac import MultiObjectiveSAC, train_mo_sac, evaluate_mo_sac
 from EnergyNetMoISO.MoISOEnv import MultiObjectiveISOEnv
@@ -74,11 +88,15 @@ def train_mo_sac_on_energynet(
     print(f"Experiment: {experiment_name}")
     print(f"{'='*80}")
     
-    # Create directories
-    os.makedirs(save_dir, exist_ok=True)
-    os.makedirs(f"{save_dir}/models", exist_ok=True)
-    os.makedirs(f"{save_dir}/logs", exist_ok=True)
-    os.makedirs(f"{save_dir}/plots", exist_ok=True)
+    # Create directories - use base directory structure
+    base_dir = os.path.dirname(save_dir) if save_dir.endswith(('models', 'logs', 'plots')) else save_dir
+    models_dir = f"{base_dir}/models" 
+    logs_dir = f"{base_dir}/logs"
+    plots_dir = f"{base_dir}/plots"
+    
+    os.makedirs(models_dir, exist_ok=True)
+    os.makedirs(logs_dir, exist_ok=True) 
+    os.makedirs(plots_dir, exist_ok=True)
     
     # Create environment
     if env_config is None:
@@ -107,7 +125,7 @@ def train_mo_sac_on_energynet(
         print(f"  Using provided weights: {weights}")
     
     # Create agent
-    tensorboard_path = f"{save_dir}/logs/{experiment_name}_{int(time.time())}" if tensorboard_log else None
+    tensorboard_path = f"{logs_dir}/{experiment_name}_{int(time.time())}" if tensorboard_log else None
     
     agent = MultiObjectiveSAC(
         state_dim=state_dim,
@@ -167,7 +185,7 @@ def train_mo_sac_on_energynet(
         }
     }
     
-    with open(f"{save_dir}/{experiment_name}_config.json", 'w') as f:
+    with open(f"{base_dir}/{experiment_name}_config.json", 'w') as f:
         json.dump(config, f, indent=2)
     
     # Train agent
@@ -186,7 +204,7 @@ def train_mo_sac_on_energynet(
         eval_freq=eval_freq,
         eval_episodes=eval_episodes,
         save_freq=save_freq,
-        save_path=f"{save_dir}/models/{experiment_name}",
+        save_path=f"{models_dir}/{experiment_name}",
         verbose=verbose
     )
     
@@ -211,7 +229,7 @@ def train_mo_sac_on_energynet(
     print(f"  Scalarized reward: {np.mean(scalarized_rewards):.3f} ± {np.std(scalarized_rewards):.3f}")
     
     # Save final model and results
-    final_model_path = f"{save_dir}/models/{experiment_name}_final.pth"
+    final_model_path = f"{models_dir}/{experiment_name}_final.pth"
     agent.save(final_model_path)
     
     results = {
@@ -234,12 +252,12 @@ def train_mo_sac_on_energynet(
     }
     
     # Save results
-    with open(f"{save_dir}/{experiment_name}_results.json", 'w') as f:
+    with open(f"{base_dir}/{experiment_name}_results.json", 'w') as f:
         json.dump(results, f, indent=2)
     
     print(f"\nResults saved:")
-    print(f"  Config: {save_dir}/{experiment_name}_config.json")
-    print(f"  Results: {save_dir}/{experiment_name}_results.json")
+    print(f"  Config: {base_dir}/{experiment_name}_config.json")
+    print(f"  Results: {base_dir}/{experiment_name}_results.json")
     print(f"  Final model: {final_model_path}")
     if tensorboard_path:
         print(f"  Tensorboard logs: {tensorboard_path}")

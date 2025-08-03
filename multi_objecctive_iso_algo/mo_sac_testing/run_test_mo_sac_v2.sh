@@ -3,7 +3,6 @@
 #SBATCH --job-name=mo_sac_test_v2
 #SBATCH --output=slurm_test_%j.out
 #SBATCH --error=slurm_test_%j.err
-#SBATCH --time=04:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
 #SBATCH --mem=16G
@@ -124,8 +123,31 @@ if [ -n "$SLURM_JOB_ID" ]; then
         if command -v nvidia-smi &> /dev/null; then
             echo "GPU Status:"
             nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv,noheader,nounits
+            echo ""
+            echo "Detailed GPU info:"
+            nvidia-smi
         fi
         echo "✓ GPU acceleration available"
+        
+        # Verify PyTorch can see the GPU
+        echo "Verifying PyTorch GPU access..."
+        $PYTHON_CMD -c "
+import torch
+print(f'PyTorch version: {torch.__version__}')
+print(f'CUDA available: {torch.cuda.is_available()}')
+if torch.cuda.is_available():
+    print(f'CUDA version: {torch.version.cuda}')
+    print(f'GPU count: {torch.cuda.device_count()}')
+    for i in range(torch.cuda.device_count()):
+        print(f'GPU {i}: {torch.cuda.get_device_name(i)}')
+        print(f'  Memory: {torch.cuda.get_device_properties(i).total_memory / 1024**3:.1f} GB')
+    # Test tensor creation on GPU
+    device = torch.device('cuda')
+    x = torch.randn(1000, 1000, device=device)
+    print(f'✓ Successfully created tensor on GPU: {x.device}')
+else:
+    print('✗ CUDA not available to PyTorch')
+"
     else
         echo "No GPU devices allocated - will use CPU"
         echo "Note: Training will be significantly slower on CPU"

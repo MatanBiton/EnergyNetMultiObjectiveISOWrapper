@@ -33,12 +33,19 @@ class ReplayBuffer:
         batch = random.sample(self.buffer, batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
         
+        # Convert to numpy arrays first for efficiency
+        states_np = np.array(states)
+        actions_np = np.array(actions)
+        rewards_np = np.array(rewards)
+        next_states_np = np.array(next_states)
+        dones_np = np.array(dones)
+        
         return (
-            torch.FloatTensor(states),
-            torch.FloatTensor(actions),
-            torch.FloatTensor(rewards),
-            torch.FloatTensor(next_states),
-            torch.BoolTensor(dones)
+            torch.from_numpy(states_np).float(),
+            torch.from_numpy(actions_np).float(),
+            torch.from_numpy(rewards_np).float(),
+            torch.from_numpy(next_states_np).float(),
+            torch.from_numpy(dones_np).bool()
         )
     
     def __len__(self):
@@ -166,6 +173,15 @@ class MultiObjectiveSAC:
         
         if self.verbose:
             print(f"Using device: {self.device}")
+            if self.device.type == 'cuda':
+                print(f"GPU: {torch.cuda.get_device_name(self.device)}")
+                print(f"GPU Memory: {torch.cuda.get_device_properties(self.device).total_memory / 1024**3:.1f} GB")
+                print(f"CUDA Version: {torch.version.cuda}")
+                # Clear GPU cache to start fresh
+                torch.cuda.empty_cache()
+            else:
+                print("WARNING: Using CPU - training will be very slow!")
+                print("Make sure CUDA is available and the job requests a GPU.")
         
         # Multi-objective weights
         if weights is None:
@@ -475,8 +491,17 @@ def train_mo_sac(env: gym.Env,
         if timesteps >= learning_starts and timesteps % train_freq == 0:
             update_info = agent.update()
             
+            # GPU memory management
+            if agent.device.type == 'cuda' and timesteps % 10000 == 0:
+                torch.cuda.empty_cache()  # Clear unused GPU memory periodically
+            
             if verbose and timesteps % 1000 == 0 and update_info:
-                print(f"Step {timesteps}: {update_info}")
+                gpu_info = ""
+                if agent.device.type == 'cuda':
+                    memory_used = torch.cuda.memory_allocated(agent.device) / 1024**3
+                    memory_total = torch.cuda.get_device_properties(agent.device).total_memory / 1024**3
+                    gpu_info = f" | GPU: {memory_used:.1f}/{memory_total:.1f} GB"
+                print(f"Step {timesteps}: {update_info}{gpu_info}")
         
         # Episode end
         if done:

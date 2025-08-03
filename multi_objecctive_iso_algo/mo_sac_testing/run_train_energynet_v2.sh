@@ -3,7 +3,6 @@
 #SBATCH --job-name=mo_sac_energynet_v2
 #SBATCH --output=slurm_energynet_%j.out
 #SBATCH --error=slurm_energynet_%j.err
-#SBATCH --time=04:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
@@ -49,6 +48,44 @@ fi
 # module load cuda/11.8
 # module load gcc/9.3.0
 
+# Load CUDA module if available (common on SLURM clusters)
+if command -v module &> /dev/null; then
+    echo "Loading CUDA modules..."
+    module load cuda/12.6 2>/dev/null || module load cuda/11.8 2>/dev/null || module load cuda 2>/dev/null || echo "No CUDA module found"
+    module list 2>&1 | grep -i cuda || echo "No CUDA modules loaded"
+fi
+
+# Set CUDA environment variables
+if [ -d "/usr/local/cuda" ]; then
+    export CUDA_HOME="/usr/local/cuda"
+    export CUDA_PATH="/usr/local/cuda"
+    export PATH="/usr/local/cuda/bin:$PATH"
+    export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+    echo "✓ Set CUDA environment variables"
+elif [ -d "/opt/cuda" ]; then
+    export CUDA_HOME="/opt/cuda"
+    export CUDA_PATH="/opt/cuda"
+    export PATH="/opt/cuda/bin:$PATH"
+    export LD_LIBRARY_PATH="/opt/cuda/lib64:$LD_LIBRARY_PATH"
+    echo "✓ Set CUDA environment variables (opt)"
+else
+    echo "⚠ Warning: CUDA installation not found in standard locations"
+fi
+
+# Activate conda environment
+echo "Activating conda environment..."
+if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/miniconda3/etc/profile.d/conda.sh"
+    conda activate IsoMOEnergyNet
+    echo "✓ Activated conda environment: IsoMOEnergyNet"
+elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/anaconda3/etc/profile.d/conda.sh"
+    conda activate IsoMOEnergyNet
+    echo "✓ Activated conda environment: IsoMOEnergyNet"
+else
+    echo "⚠ Warning: Conda not found, using system Python"
+fi
+
 # Try different Python commands
 PYTHON_CMD=""
 for cmd in python3 python python3.8 python3.9 python3.10; do
@@ -65,6 +102,60 @@ if [ -z "$PYTHON_CMD" ]; then
 fi
 
 echo "Python version: $($PYTHON_CMD --version)"
+echo "Python location: $(which $PYTHON_CMD)"
+
+# Check and fix CUDA availability
+echo ""
+echo "Checking CUDA availability..."
+echo "CUDA_HOME: ${CUDA_HOME:-Not set}"
+echo "CUDA_PATH: ${CUDA_PATH:-Not set}"
+
+# Check if nvidia-smi is available (indicates GPU drivers are present)
+if command -v nvidia-smi &> /dev/null; then
+    echo "GPU Status:"
+    nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv,noheader,nounits
+    
+    # Check PyTorch CUDA availability
+    echo "Checking PyTorch CUDA support..."
+    TORCH_CUDA_AVAILABLE=$($PYTHON_CMD -c "import torch; print(torch.cuda.is_available())" 2>/dev/null || echo "False")
+    TORCH_VERSION=$($PYTHON_CMD -c "import torch; print(torch.__version__)" 2>/dev/null || echo "Unknown")
+    
+    echo "PyTorch version: $TORCH_VERSION"
+    echo "PyTorch CUDA available: $TORCH_CUDA_AVAILABLE"
+    
+    if [ "$TORCH_CUDA_AVAILABLE" = "False" ]; then
+        echo "⚠ Warning: PyTorch reports CUDA not available despite GPU presence"
+        echo "This may be due to:"
+        echo "  1. PyTorch installed without CUDA support"
+        echo "  2. CUDA version mismatch between PyTorch and system"
+        echo "  3. Missing CUDA environment variables"
+        echo ""
+        echo "Attempting to reinstall PyTorch with CUDA support..."
+        
+        # Try to reinstall PyTorch with CUDA support
+        $PYTHON_CMD -m pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126 --quiet || {
+            echo "Failed to reinstall PyTorch with CUDA 12.6, trying CUDA 11.8..."
+            $PYTHON_CMD -m pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --quiet || {
+                echo "Failed to reinstall PyTorch with CUDA support"
+                echo "Continuing with CPU training..."
+            }
+        }
+        
+        # Check again after reinstall
+        TORCH_CUDA_AVAILABLE_AFTER=$($PYTHON_CMD -c "import torch; print(torch.cuda.is_available())" 2>/dev/null || echo "False")
+        if [ "$TORCH_CUDA_AVAILABLE_AFTER" = "True" ]; then
+            echo "✓ Successfully fixed PyTorch CUDA support"
+        else
+            echo "⚠ PyTorch CUDA still not available, training will use CPU"
+        fi
+    else
+        echo "✓ PyTorch CUDA support is working"
+    fi
+else
+    echo "No GPU drivers detected (nvidia-smi not available)"
+    echo "Training will use CPU"
+fi
+echo ""
 
 # Set up working directory - use SLURM_TMPDIR if available, otherwise create in /tmp
 if [ -n "$SLURM_TMPDIR" ]; then
@@ -85,12 +176,20 @@ cp "$ORIG_DIR"/requirements.txt "$WORK_DIR/" 2>/dev/null || true
 if [ -f "$ORIG_DIR/../multi_objective_sac.py" ]; then
     cp "$ORIG_DIR/../multi_objective_sac.py" "$WORK_DIR/"
     echo "Copied multi_objective_sac.py from parent directory"
+else
+    echo "Warning: multi_objective_sac.py not found at $ORIG_DIR/../multi_objective_sac.py"
 fi
 
 # Copy EnergyNet module if it exists
-if [ -d "$ORIG_DIR/../EnergyNetMoISO" ]; then
+if [ -d "$ORIG_DIR/../../EnergyNetMoISO" ]; then
+    cp -r "$ORIG_DIR/../../EnergyNetMoISO" "$WORK_DIR/"
+    echo "Copied EnergyNetMoISO directory from $ORIG_DIR/../../EnergyNetMoISO"
+elif [ -d "$ORIG_DIR/../EnergyNetMoISO" ]; then
     cp -r "$ORIG_DIR/../EnergyNetMoISO" "$WORK_DIR/"
-    echo "Copied EnergyNetMoISO directory"
+    echo "Copied EnergyNetMoISO directory from $ORIG_DIR/../EnergyNetMoISO"
+else
+    echo "Warning: EnergyNetMoISO directory not found in expected locations"
+    echo "Searched in: $ORIG_DIR/../../EnergyNetMoISO and $ORIG_DIR/../EnergyNetMoISO"
 fi
 
 # Copy any existing best model
@@ -105,6 +204,50 @@ echo "Changed to working directory: $(pwd)"
 echo "Files in working directory:"
 ls -la
 
+# Check Python imports before running training
+echo ""
+echo "Testing Python imports..."
+echo "Python path will include:"
+echo "  - Current directory: $(pwd)"
+echo "  - Parent directories will be added by the script"
+
+# Test basic packages first
+echo "Testing basic dependencies..."
+if $PYTHON_CMD -c "import torch, numpy, gymnasium, matplotlib" 2>/dev/null; then
+    echo "✓ Basic dependencies (torch, numpy, gymnasium, matplotlib) available"
+else
+    echo "✗ Basic dependencies missing"
+    echo "Available packages:"
+    $PYTHON_CMD -c "import sys; print([p for p in sys.path if 'site-packages' in p][:3])"
+    exit 1
+fi
+
+# Test critical imports
+echo "Testing multi_objective_sac import..."
+if $PYTHON_CMD -c "import multi_objective_sac" 2>/dev/null; then
+    echo "✓ multi_objective_sac import successful"
+else
+    echo "✗ multi_objective_sac import failed"
+    echo "Available Python files:"
+    ls -la *.py
+    exit 1
+fi
+
+echo "Testing EnergyNetMoISO import..."
+if $PYTHON_CMD -c "from EnergyNetMoISO.MoISOEnv import MultiObjectiveISOEnv" 2>/dev/null; then
+    echo "✓ EnergyNetMoISO import successful"
+else
+    echo "✗ EnergyNetMoISO import failed"
+    echo "EnergyNetMoISO directory contents:"
+    if [ -d "EnergyNetMoISO" ]; then
+        ls -la EnergyNetMoISO/
+    else
+        echo "EnergyNetMoISO directory not found!"
+    fi
+    exit 1
+fi
+echo ""
+
 # SLURM environment setup
 if [ -n "$SLURM_JOB_ID" ]; then
     echo "Running under SLURM job manager"
@@ -118,9 +261,13 @@ if [ -n "$SLURM_JOB_ID" ]; then
     
     if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
         echo "GPU devices: $CUDA_VISIBLE_DEVICES"
-        if command -v nvidia-smi &> /dev/null; then
-            echo "GPU Status:"
-            nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv,noheader,nounits
+        
+        # Final check for CUDA availability before training
+        FINAL_CUDA_CHECK=$($PYTHON_CMD -c "import torch; print(torch.cuda.is_available())" 2>/dev/null || echo "False")
+        if [ "$FINAL_CUDA_CHECK" = "True" ]; then
+            echo "✓ GPU training enabled"
+        else
+            echo "⚠ GPU devices allocated but PyTorch CUDA not available - using CPU"
         fi
     else
         echo "No GPU devices allocated"
@@ -142,23 +289,17 @@ echo ""
 
 # Create Python arguments array
 PYTHON_ARGS=(
-    "--episodes" "$EPISODES"
-    "--lr" "$LEARNING_RATE"
-    "--batch_size" "$BATCH_SIZE"
-    "--save_dir" "./models"
-    "--log_dir" "./logs"
-    "--checkpoint_dir" "./checkpoints"
-    "--save_interval" "10000"
-    "--eval_interval" "5000"
+    "--total-timesteps" "$EPISODES"
+    "--actor-lr" "$LEARNING_RATE"
+    "--batch-size" "$BATCH_SIZE"
+    "--save-dir" "."
+    "--experiment-name" "energynet_training"
+    "--eval-freq" "5000"
+    "--save-freq" "10000"
     "--verbose"
 )
 
-# Add GPU argument if available
-if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
-    PYTHON_ARGS+=("--device" "cuda")
-else
-    PYTHON_ARGS+=("--device" "cpu")
-fi
+# Training arguments are set above - no additional GPU logic needed here
 
 echo "Running EnergyNet training..."
 echo "Command: $PYTHON_CMD train_energynet.py ${PYTHON_ARGS[*]}"
@@ -172,6 +313,10 @@ EXIT_CODE=$?
 
 # Copy results back to original directory
 echo "Copying results back to original directory..."
+
+# Copy config and results files
+cp "$WORK_DIR"/*_config.json "$ORIG_DIR/" 2>/dev/null || echo "Warning: Could not copy config files back"
+cp "$WORK_DIR"/*_results.json "$ORIG_DIR/" 2>/dev/null || echo "Warning: Could not copy results files back"
 
 # Copy models
 if [ -d "$WORK_DIR/models" ] && [ -n "$(ls -A "$WORK_DIR/models" 2>/dev/null)" ]; then
@@ -187,18 +332,11 @@ if [ -d "$WORK_DIR/plots" ] && [ -n "$(ls -A "$WORK_DIR/plots" 2>/dev/null)" ]; 
     echo "Plots copied to: $ORIG_DIR/plots/"
 fi
 
-# Copy logs
+# Copy logs (includes tensorboard logs)
 if [ -d "$WORK_DIR/logs" ] && [ -n "$(ls -A "$WORK_DIR/logs" 2>/dev/null)" ]; then
     mkdir -p "$ORIG_DIR/logs"
     cp -r "$WORK_DIR/logs"/* "$ORIG_DIR/logs/" 2>/dev/null || echo "Warning: Could not copy logs back"
-    echo "Logs copied to: $ORIG_DIR/logs/"
-fi
-
-# Copy tensorboard runs
-if [ -d "$WORK_DIR/runs" ] && [ -n "$(ls -A "$WORK_DIR/runs" 2>/dev/null)" ]; then
-    mkdir -p "$ORIG_DIR/runs"
-    cp -r "$WORK_DIR/runs"/* "$ORIG_DIR/runs/" 2>/dev/null || echo "Warning: Could not copy runs back"
-    echo "TensorBoard logs copied to: $ORIG_DIR/runs/"
+    echo "Logs (including TensorBoard) copied to: $ORIG_DIR/logs/"
 fi
 
 # Copy checkpoints
@@ -225,17 +363,21 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "Results copied back to: $ORIG_DIR"
     echo ""
     echo "Results should be in:"
+    echo "  - $ORIG_DIR/                (config and results files)"
     echo "  - $ORIG_DIR/models/         (trained model files)"
+    echo "  - $ORIG_DIR/logs/           (tensorboard logs)"
     echo "  - $ORIG_DIR/plots/          (training plots and analysis)" 
-    echo "  - $ORIG_DIR/logs/           (training logs)"
-    echo "  - $ORIG_DIR/runs/           (tensorboard logs)"
     echo "  - $ORIG_DIR/checkpoints/    (training checkpoints)"
     echo ""
     echo "To view results:"
-    echo "  ls -la $ORIG_DIR/models/ $ORIG_DIR/plots/ $ORIG_DIR/logs/"
+    echo "  ./view_results.sh"
+    echo "  # or manually:"
+    echo "  ls -la $ORIG_DIR/models/ $ORIG_DIR/logs/"
     echo ""
     echo "To view tensorboard logs:"
-    echo "  tensorboard --logdir $ORIG_DIR/runs/ --host 0.0.0.0 --port 6006"
+    echo "  tensorboard --logdir $ORIG_DIR/logs/ --host 0.0.0.0 --port 6006"
+    echo "  # or use the helper script:"
+    echo "  ./view_results.sh --tensorboard"
     echo ""
     echo "To test the trained model:"
     echo "  sbatch -c 2 --gres=gpu:1 ./run_test_trained_model.sh"

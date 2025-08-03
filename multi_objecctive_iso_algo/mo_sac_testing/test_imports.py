@@ -10,7 +10,29 @@ import os
 print("Testing imports for MO-SAC...")
 print(f"Python version: {sys.version}")
 print(f"Current working directory: {os.getcwd()}")
-print(f"Python path: {sys.path}")
+
+# Add paths for imports - same logic as in train_energynet.py
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(parent_dir)
+
+print(f"Current dir: {current_dir}")
+print(f"Parent dir: {parent_dir}")
+print(f"Root dir: {root_dir}")
+
+# Add current directory (for when files are copied to temp dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Add parent directory (for multi_objective_sac.py)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# Add root directory (for EnergyNetMoISO package)
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+print(f"Python path (first 5): {sys.path[:5]}")
 print("")
 
 # Test basic packages
