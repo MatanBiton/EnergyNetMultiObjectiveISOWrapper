@@ -29,6 +29,7 @@ if root_dir not in sys.path:
 
 from multi_objective_sac import MultiObjectiveSAC, train_mo_sac, evaluate_mo_sac
 from EnergyNetMoISO.MoISOEnv import MultiObjectiveISOEnv
+from EnergyNetMoISO.pcs_models.constant_pcs_agent import ConstantPCSAgent
 
 
 def create_energynet_env(**kwargs) -> MultiObjectiveISOEnv:
@@ -36,7 +37,7 @@ def create_energynet_env(**kwargs) -> MultiObjectiveISOEnv:
     default_config = {
         'use_dispatch_action': False,
         'dispatch_strategy': "PROPORTIONAL",
-        'trained_pcs_model': None,
+        'trained_pcs_model': ConstantPCSAgent(1),
         # Add other environment parameters as needed
     }
     default_config.update(kwargs)
