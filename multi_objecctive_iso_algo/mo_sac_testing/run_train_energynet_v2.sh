@@ -12,19 +12,22 @@
 # Supports all optimization parameters for Multi-Objective SAC
 #
 # Usage Examples:
-#   # Basic training (default parameters)
+#   # Basic training (default parameters, default experiment name)
 #   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
 #
-#   # Custom timesteps
-#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 200000
+#   # Custom experiment name
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh experiment1
+#
+#   # Custom experiment name and timesteps
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh baseline_test 200000
 #
 #   # With optimizations (use environment variables)
 #   ENABLE_LR_ANNEALING=true ENABLE_REWARD_SCALING=true \
-#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh optimized_run 500000
 #
 #   # Full optimization suite
 #   ENABLE_ALL_OPTIMIZATIONS=true LR_ANNEALING_TYPE=cosine VALUE_CLIP_RANGE=150.0 \
-#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 1000000
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh full_opt 1000000
 
 echo "=========================================="
 echo "Multi-Objective SAC EnergyNet Training v2 (SLURM)"
@@ -289,9 +292,10 @@ else
 fi
 
 # Training parameters
-EPISODES=${1:-100000}  # Default 100k episodes, or use first argument
-LEARNING_RATE=${2:-0.0003}  # Default learning rate
-BATCH_SIZE=${3:-256}  # Default batch size
+EXPERIMENT_NAME=${1:-"default"}  # First argument: experiment name (default: "default")
+EPISODES=${2:-100000}  # Second argument: episodes (default: 100k episodes)
+LEARNING_RATE=${3:-0.0003}  # Third argument: learning rate
+BATCH_SIZE=${4:-256}  # Fourth argument: batch size
 
 # Optimization parameters (controlled via environment variables)
 # Learning Rate Annealing
@@ -325,6 +329,7 @@ if [ "$ENABLE_ALL_OPTIMIZATIONS" = "true" ]; then
 fi
 
 echo "Training Parameters:"
+echo "  Experiment Name: $EXPERIMENT_NAME"
 echo "  Episodes: $EPISODES"
 echo "  Learning Rate: $LEARNING_RATE"
 echo "  Batch Size: $BATCH_SIZE"
@@ -355,7 +360,7 @@ PYTHON_ARGS=(
     "--actor-lr" "$LEARNING_RATE"
     "--batch-size" "$BATCH_SIZE"
     "--save-dir" "."
-    "--experiment-name" "energynet_training"
+    "--experiment-name" "train_energynet_${EXPERIMENT_NAME}"
     "--eval-freq" "5000"
     "--save-freq" "10000"
     "--verbose"
@@ -436,8 +441,8 @@ fi
 
 # Copy best model to root if it exists
 if [ -f "$WORK_DIR/best_model.zip" ]; then
-    cp "$WORK_DIR/best_model.zip" "$ORIG_DIR/../../best_model.zip" 2>/dev/null || echo "Warning: Could not copy best model back"
-    echo "Best model copied to: $ORIG_DIR/../../best_model.zip"
+    cp "$WORK_DIR/best_model.zip" "$ORIG_DIR/../../train_energynet_${EXPERIMENT_NAME}_best_model.zip" 2>/dev/null || echo "Warning: Could not copy best model back"
+    echo "Best model copied to: $ORIG_DIR/../../train_energynet_${EXPERIMENT_NAME}_best_model.zip"
 fi
 
 # Check if the training completed successfully
@@ -447,15 +452,16 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "EnergyNet training completed successfully!"
     echo "=========================================="
     echo "SLURM Job ID: $SLURM_JOB_ID"
+    echo "Experiment Name: train_energynet_${EXPERIMENT_NAME}"
     echo "Training Episodes: $EPISODES"
     echo "Results copied back to: $ORIG_DIR"
     echo ""
     echo "Results should be in:"
-    echo "  - $ORIG_DIR/                (config and results files)"
-    echo "  - $ORIG_DIR/models/         (trained model files)"
-    echo "  - $ORIG_DIR/logs/           (tensorboard logs)"
+    echo "  - $ORIG_DIR/                (config and results files: train_energynet_${EXPERIMENT_NAME}_*)"
+    echo "  - $ORIG_DIR/models/         (trained model files: train_energynet_${EXPERIMENT_NAME}_*)"
+    echo "  - $ORIG_DIR/logs/           (tensorboard logs: train_energynet_${EXPERIMENT_NAME})"
     echo "  - $ORIG_DIR/plots/          (training plots and analysis)" 
-    echo "  - $ORIG_DIR/checkpoints/    (training checkpoints)"
+    echo "  - $ORIG_DIR/checkpoints/    (training checkpoints: train_energynet_${EXPERIMENT_NAME}_*)"
     echo ""
     echo "To view results:"
     echo "  ./view_results.sh"
