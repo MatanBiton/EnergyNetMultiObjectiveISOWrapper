@@ -13,7 +13,7 @@ This guide provides a systematic approach to testing the optimization features f
 TIMESTEPS=500000          # Same training duration
 BATCH_SIZE=256           # Same batch size  
 BUFFER_SIZE=1000000      # Same replay buffer
-WEIGHTS="1.0 1.0 1.0"    # Equal objective weights
+WEIGHTS="1.0 1.0"    # Equal objective weights
 SEEDS=42                 # Same random seed (for initial comparison)
 ```
 
@@ -33,11 +33,12 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000 42
 ENABLE_LR_ANNEALING=true LR_ANNEALING_TYPE=cosine \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000 42
 
-# Test 3: Value clipping only
-ENABLE_VALUE_CLIPPING=true VALUE_CLIP_RANGE=200.0 \
+# Test 3: Orthogonal initialization only
+ENABLE_ORTHOGONAL_INIT=true \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000 42
 
-# Test 4: Orthogonal initialization only (already default, but test without others)
+# Test 4: Value clipping only
+ENABLE_VALUE_CLIPPING=true VALUE_CLIP_RANGE=200.0 \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000 42
 ```
 

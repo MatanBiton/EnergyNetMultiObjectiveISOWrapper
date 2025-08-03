@@ -71,7 +71,7 @@ def train_mo_sac_on_energynet(
     lr_decay_rate: float = 0.95,
     use_reward_scaling: bool = False,
     reward_scale_epsilon: float = 1e-4,
-    use_orthogonal_init: bool = True,
+    use_orthogonal_init: bool = False,
     orthogonal_gain: float = 1.0,
     actor_orthogonal_gain: float = 0.01,
     critic_orthogonal_gain: float = 1.0,
@@ -376,8 +376,8 @@ def main():
                        help='Enable reward scaling/normalization')
     parser.add_argument('--reward-scale-epsilon', type=float, default=1e-4,
                        help='Epsilon for reward scaling')
-    parser.add_argument('--disable-orthogonal-init', action='store_true',
-                       help='Disable orthogonal initialization (use Xavier instead)')
+    parser.add_argument('--use-orthogonal-init', action='store_true',
+                       help='Enable orthogonal initialization (disabled by default)')
     parser.add_argument('--orthogonal-gain', type=float, default=1.0,
                        help='Gain for orthogonal initialization')
     parser.add_argument('--actor-orthogonal-gain', type=float, default=0.01,
@@ -436,7 +436,7 @@ def main():
         lr_decay_rate=args.lr_decay_rate,
         use_reward_scaling=args.use_reward_scaling,
         reward_scale_epsilon=args.reward_scale_epsilon,
-        use_orthogonal_init=not args.disable_orthogonal_init,
+        use_orthogonal_init=args.use_orthogonal_init,
         orthogonal_gain=args.orthogonal_gain,
         actor_orthogonal_gain=args.actor_orthogonal_gain,
         critic_orthogonal_gain=args.critic_orthogonal_gain,

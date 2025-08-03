@@ -4,16 +4,22 @@
 
 ### Basic Training
 ```bash
-# Default (100k timesteps, orthogonal init only)
+# Default (100k timesteps, NO optimizations - true baseline)
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
 
-# Custom timesteps
+# Custom timesteps (still no optimizations)
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 ```
 
 ### Recommended Configurations
 
-#### 🟢 Conservative (Production Safe)
+#### ⚪ Baseline (No Optimizations)
+```bash
+# True baseline for fair comparison
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
+```
+
+#### 🟢 Conservative (Single Optimization)
 ```bash
 ENABLE_REWARD_SCALING=true \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
@@ -50,6 +56,9 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 ENABLE_LR_ANNEALING=true LR_ANNEALING_TYPE=cosine \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 
+ENABLE_ORTHOGONAL_INIT=true \
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
+
 ENABLE_VALUE_CLIPPING=true VALUE_CLIP_RANGE=200.0 \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 
@@ -67,7 +76,7 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 |---------|--------|-----------|
 | **LR Annealing** | `ENABLE_LR_ANNEALING=true` | `LR_ANNEALING_TYPE=cosine` `LR_MIN_FACTOR=0.1` |
 | **Reward Scaling** | `ENABLE_REWARD_SCALING=true` | `REWARD_SCALE_EPSILON=1e-4` |
-| **Orthogonal Init** | (enabled by default) | `ACTOR_ORTHOGONAL_GAIN=0.01` `CRITIC_ORTHOGONAL_GAIN=1.0` |
+| **Orthogonal Init** | `ENABLE_ORTHOGONAL_INIT=true` | `ACTOR_ORTHOGONAL_GAIN=0.01` `CRITIC_ORTHOGONAL_GAIN=1.0` |
 | **Value Clipping** | `ENABLE_VALUE_CLIPPING=true` | `VALUE_CLIP_RANGE=200.0` |
 | **All Optimizations** | `ENABLE_ALL_OPTIMIZATIONS=true` | Uses good defaults |
 
@@ -169,6 +178,7 @@ sbatch -c 8 --gres=gpu:1 --mem=64G ./run_train_energynet_v2.sh
 
 - [ ] Test baseline (no optimizations): `sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 10000`
 - [ ] Test conservative: `ENABLE_REWARD_SCALING=true sbatch ...`
+- [ ] Test orthogonal init: `ENABLE_ORTHOGONAL_INIT=true sbatch ...`
 - [ ] Test moderate: `ENABLE_LR_ANNEALING=true ENABLE_REWARD_SCALING=true ...`
 - [ ] Test aggressive: `ENABLE_ALL_OPTIMIZATIONS=true ...`
 - [ ] Monitor TensorBoard logs for optimization metrics
@@ -181,4 +191,4 @@ sbatch -c 8 --gres=gpu:1 --mem=64G ./run_train_energynet_v2.sh
 - `IMPLEMENTATION_SUMMARY.md` - Technical implementation details
 
 ---
-**Quick Help**: All optimizations are backward compatible and optional! Start with `ENABLE_REWARD_SCALING=true` for safe improvements.
+**Quick Help**: All optimizations are **disabled by default** for true baseline comparison! Start with individual optimizations like `ENABLE_REWARD_SCALING=true` to test their effects.

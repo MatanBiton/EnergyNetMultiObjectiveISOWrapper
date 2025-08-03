@@ -237,7 +237,7 @@ class MultiObjectiveSAC:
                  lr_decay_rate: float = 0.95,  # For exponential decay
                  use_reward_scaling: bool = False,
                  reward_scale_epsilon: float = 1e-4,
-                 use_orthogonal_init: bool = True,
+                 use_orthogonal_init: bool = False,  # Changed to False for true baseline
                  orthogonal_gain: float = 1.0,
                  actor_orthogonal_gain: float = 0.01,
                  critic_orthogonal_gain: float = 1.0,

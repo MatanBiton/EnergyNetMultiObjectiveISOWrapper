@@ -63,7 +63,7 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 1000000
 |-------------|---------------------|---------|
 | **LR Annealing** | `ENABLE_LR_ANNEALING=true` | `LR_ANNEALING_TYPE=cosine` |
 | **Reward Scaling** | `ENABLE_REWARD_SCALING=true` | `REWARD_SCALE_EPSILON=1e-4` |
-| **Orthogonal Init** | Default enabled | `ACTOR_ORTHOGONAL_GAIN=0.01` |
+| **Orthogonal Init** | `ENABLE_ORTHOGONAL_INIT=true` | `ACTOR_ORTHOGONAL_GAIN=0.01` |
 | **Value Clipping** | `ENABLE_VALUE_CLIPPING=true` | `VALUE_CLIP_RANGE=200.0` |
 | **All Optimizations** | `ENABLE_ALL_OPTIMIZATIONS=true` | One-click enable all |
 
@@ -80,7 +80,13 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 1000000
 
 ### **For Fair Comparison** (All use same timesteps: 500k)
 
-### **Conservative** (Production Safe)
+### **Baseline** (No Optimizations - True Control Group)
+```bash
+# Pure baseline - no optimizations enabled
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
+```
+
+### **Conservative** (Single Optimization)
 ```bash
 ENABLE_REWARD_SCALING=true \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
@@ -117,11 +123,15 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh $TIMESTEPS
 ENABLE_LR_ANNEALING=true LR_ANNEALING_TYPE=cosine \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh $TIMESTEPS
 
-# Experiment 4: Value clipping only
+# Experiment 4: Orthogonal initialization only
+ENABLE_ORTHOGONAL_INIT=true \
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh $TIMESTEPS
+
+# Experiment 5: Value clipping only
 ENABLE_VALUE_CLIPPING=true VALUE_CLIP_RANGE=200.0 \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh $TIMESTEPS
 
-# Experiment 5: All optimizations
+# Experiment 6: All optimizations
 ENABLE_ALL_OPTIMIZATIONS=true \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh $TIMESTEPS
 ```

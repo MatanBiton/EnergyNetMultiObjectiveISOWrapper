@@ -306,7 +306,7 @@ ENABLE_REWARD_SCALING=${ENABLE_REWARD_SCALING:-false}
 REWARD_SCALE_EPSILON=${REWARD_SCALE_EPSILON:-1e-4}
 
 # Orthogonal Initialization
-DISABLE_ORTHOGONAL_INIT=${DISABLE_ORTHOGONAL_INIT:-false}
+ENABLE_ORTHOGONAL_INIT=${ENABLE_ORTHOGONAL_INIT:-false}
 ORTHOGONAL_GAIN=${ORTHOGONAL_GAIN:-1.0}
 ACTOR_ORTHOGONAL_GAIN=${ACTOR_ORTHOGONAL_GAIN:-0.01}
 CRITIC_ORTHOGONAL_GAIN=${CRITIC_ORTHOGONAL_GAIN:-1.0}
@@ -320,7 +320,7 @@ if [ "$ENABLE_ALL_OPTIMIZATIONS" = "true" ]; then
     ENABLE_LR_ANNEALING=true
     ENABLE_REWARD_SCALING=true
     ENABLE_VALUE_CLIPPING=true
-    DISABLE_ORTHOGONAL_INIT=false
+    ENABLE_ORTHOGONAL_INIT=true
     echo "🚀 All optimizations enabled with default parameters"
 fi
 
@@ -339,8 +339,8 @@ if [ "$ENABLE_LR_ANNEALING" = "true" ]; then
 fi
 echo "  Reward Scaling: $ENABLE_REWARD_SCALING"
 [ "$ENABLE_REWARD_SCALING" = "true" ] && echo "    Epsilon: $REWARD_SCALE_EPSILON"
-echo "  Orthogonal Init: $([ "$DISABLE_ORTHOGONAL_INIT" = "true" ] && echo "false" || echo "true")"
-if [ "$DISABLE_ORTHOGONAL_INIT" != "true" ]; then
+echo "  Orthogonal Init: $ENABLE_ORTHOGONAL_INIT"
+if [ "$ENABLE_ORTHOGONAL_INIT" = "true" ]; then
     echo "    General Gain: $ORTHOGONAL_GAIN"
     echo "    Actor Gain: $ACTOR_ORTHOGONAL_GAIN"
     echo "    Critic Gain: $CRITIC_ORTHOGONAL_GAIN"
@@ -375,9 +375,8 @@ if [ "$ENABLE_REWARD_SCALING" = "true" ]; then
     PYTHON_ARGS+=("--reward-scale-epsilon" "$REWARD_SCALE_EPSILON")
 fi
 
-if [ "$DISABLE_ORTHOGONAL_INIT" = "true" ]; then
-    PYTHON_ARGS+=("--disable-orthogonal-init")
-else
+if [ "$ENABLE_ORTHOGONAL_INIT" = "true" ]; then
+    PYTHON_ARGS+=("--use-orthogonal-init")
     PYTHON_ARGS+=("--orthogonal-gain" "$ORTHOGONAL_GAIN")
     PYTHON_ARGS+=("--actor-orthogonal-gain" "$ACTOR_ORTHOGONAL_GAIN")
     PYTHON_ARGS+=("--critic-orthogonal-gain" "$CRITIC_ORTHOGONAL_GAIN")

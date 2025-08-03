@@ -8,13 +8,13 @@ The `run_train_energynet_v2.sh` script is designed for training Multi-Objective 
 
 ### Simple Training
 ```bash
-# Default training (100k timesteps, no optimizations except orthogonal init)
+# Default training (100k timesteps, NO optimizations - true baseline)
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
 
-# Custom timesteps
+# Custom timesteps with no optimizations
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 
-# Custom timesteps with learning rate and batch size
+# Custom timesteps with learning rate and batch size (still no optimizations)
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 1000000 0.0005 512
 ```
 
@@ -87,20 +87,20 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 
 ### 3. Orthogonal Initialization 🎲
 
-**Disable Orthogonal Initialization:**
+**Enable Orthogonal Initialization:**
 ```bash
-DISABLE_ORTHOGONAL_INIT=true sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
+ENABLE_ORTHOGONAL_INIT=true sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
 ```
 
 **Configure Orthogonal Initialization:**
 ```bash
 # Custom gains
-ACTOR_ORTHOGONAL_GAIN=0.05 CRITIC_ORTHOGONAL_GAIN=1.2 \
+ENABLE_ORTHOGONAL_INIT=true ACTOR_ORTHOGONAL_GAIN=0.05 CRITIC_ORTHOGONAL_GAIN=1.2 \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 ```
 
 **Available Parameters:**
-- `DISABLE_ORTHOGONAL_INIT` (true/false) - Disable orthogonal init (use Xavier)
+- `ENABLE_ORTHOGONAL_INIT` (true/false) - Enable orthogonal initialization (disabled by default)
 - `ORTHOGONAL_GAIN` (float) - General orthogonal gain (default: 1.0)
 - `ACTOR_ORTHOGONAL_GAIN` (float) - Actor-specific gain (default: 0.01)
 - `CRITIC_ORTHOGONAL_GAIN` (float) - Critic-specific gain (default: 1.0)
@@ -178,6 +178,9 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 ENABLE_LR_ANNEALING=true LR_ANNEALING_TYPE=cosine \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 
+ENABLE_ORTHOGONAL_INIT=true \
+sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
+
 ENABLE_VALUE_CLIPPING=true VALUE_CLIP_RANGE=200.0 \
 sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
 
@@ -245,7 +248,7 @@ sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 1000000
 | `LR_DECAY_RATE` | float | 0.95 | Exponential decay rate |
 | `ENABLE_REWARD_SCALING` | bool | false | Enable reward normalization |
 | `REWARD_SCALE_EPSILON` | float | 1e-4 | Numerical stability epsilon |
-| `DISABLE_ORTHOGONAL_INIT` | bool | false | Disable orthogonal initialization |
+| `ENABLE_ORTHOGONAL_INIT` | bool | false | Enable orthogonal initialization |
 | `ORTHOGONAL_GAIN` | float | 1.0 | General orthogonal gain |
 | `ACTOR_ORTHOGONAL_GAIN` | float | 0.01 | Actor network gain |
 | `CRITIC_ORTHOGONAL_GAIN` | float | 1.0 | Critic network gain |
