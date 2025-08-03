@@ -2,14 +2,73 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR, ExponentialLR, LinearLR
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import copy
 import os
-from typing import Tuple, Dict, Any, Optional, List
+from typing import Tuple, Dict, Any, Optional, List, Union
 from collections import deque
 import random
 import gymnasium as gym
+import math
+
+
+def orthogonal_init(module: nn.Module, gain: float = 1.0):
+    """Apply orthogonal initialization to linear layers."""
+    if isinstance(module, nn.Linear):
+        nn.init.orthogonal_(module.weight, gain)
+        if module.bias is not None:
+            nn.init.constant_(module.bias, 0)
+
+
+def xavier_uniform_init(module: nn.Module):
+    """Apply Xavier uniform initialization to linear layers."""
+    if isinstance(module, nn.Linear):
+        nn.init.xavier_uniform_(module.weight)
+        if module.bias is not None:
+            nn.init.constant_(module.bias, 0)
+
+
+class RunningMeanStd:
+    """Running mean and standard deviation tracker for reward normalization."""
+    
+    def __init__(self, shape: Tuple[int, ...], epsilon: float = 1e-4):
+        self.shape = shape
+        self.epsilon = epsilon
+        self.mean = np.zeros(shape, dtype=np.float64)
+        self.var = np.ones(shape, dtype=np.float64)
+        self.count = 0
+    
+    def update(self, x: np.ndarray):
+        """Update running statistics with new data."""
+        batch_mean = np.mean(x, axis=0)
+        batch_var = np.var(x, axis=0)
+        batch_count = x.shape[0]
+        self.update_from_moments(batch_mean, batch_var, batch_count)
+    
+    def update_from_moments(self, batch_mean: np.ndarray, batch_var: np.ndarray, batch_count: int):
+        """Update from pre-computed moments."""
+        delta = batch_mean - self.mean
+        total_count = self.count + batch_count
+        
+        new_mean = self.mean + delta * batch_count / total_count
+        m_a = self.var * self.count
+        m_b = batch_var * batch_count
+        M2 = m_a + m_b + np.square(delta) * self.count * batch_count / total_count
+        new_var = M2 / total_count
+        
+        self.mean = new_mean
+        self.var = new_var
+        self.count = total_count
+    
+    def normalize(self, x: np.ndarray) -> np.ndarray:
+        """Normalize data using current statistics."""
+        return (x - self.mean) / np.sqrt(self.var + self.epsilon)
+    
+    def denormalize(self, x: np.ndarray) -> np.ndarray:
+        """Denormalize data using current statistics."""
+        return x * np.sqrt(self.var + self.epsilon) + self.mean
 
 
 class ReplayBuffer:
@@ -56,7 +115,8 @@ class Actor(nn.Module):
     """Actor network for continuous action spaces."""
     
     def __init__(self, state_dim: int, action_dim: int, hidden_dims: List[int] = [256, 256],
-                 log_std_min: float = -20, log_std_max: float = 2):
+                 log_std_min: float = -20, log_std_max: float = 2, 
+                 use_orthogonal_init: bool = True, orthogonal_gain: float = 1.0):
         super(Actor, self).__init__()
         
         self.log_std_min = log_std_min
@@ -75,6 +135,15 @@ class Actor(nn.Module):
         self.backbone = nn.Sequential(*layers)
         self.mean_head = nn.Linear(input_dim, action_dim)
         self.log_std_head = nn.Linear(input_dim, action_dim)
+        
+        # Initialize weights
+        if use_orthogonal_init:
+            self.apply(lambda m: orthogonal_init(m, orthogonal_gain))
+            # Use smaller gain for output layers
+            orthogonal_init(self.mean_head, 0.01)
+            orthogonal_init(self.log_std_head, 0.01)
+        else:
+            self.apply(xavier_uniform_init)
         
     def forward(self, state: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass returning mean and log_std."""
@@ -102,7 +171,8 @@ class Critic(nn.Module):
     """Critic network for multi-objective rewards."""
     
     def __init__(self, state_dim: int, action_dim: int, reward_dim: int, 
-                 hidden_dims: List[int] = [256, 256]):
+                 hidden_dims: List[int] = [256, 256], 
+                 use_orthogonal_init: bool = True, orthogonal_gain: float = 1.0):
         super(Critic, self).__init__()
         
         # Build network
@@ -117,6 +187,14 @@ class Critic(nn.Module):
         
         self.backbone = nn.Sequential(*layers)
         self.output_head = nn.Linear(input_dim, reward_dim)
+        
+        # Initialize weights
+        if use_orthogonal_init:
+            self.apply(lambda m: orthogonal_init(m, orthogonal_gain))
+            # Use smaller gain for output layer
+            orthogonal_init(self.output_head, 0.01)
+        else:
+            self.apply(xavier_uniform_init)
         
     def forward(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
         """Forward pass returning Q-values for each objective."""
@@ -151,6 +229,20 @@ class MultiObjectiveSAC:
                  # Buffer parameters
                  buffer_capacity: int = 1000000,
                  batch_size: int = 256,
+                 # Optimization features (NEW)
+                 use_lr_annealing: bool = False,
+                 lr_annealing_type: str = 'cosine',  # 'cosine', 'linear', 'exponential'
+                 lr_annealing_steps: Optional[int] = None,
+                 lr_min_factor: float = 0.1,  # Minimum LR as fraction of initial LR
+                 lr_decay_rate: float = 0.95,  # For exponential decay
+                 use_reward_scaling: bool = False,
+                 reward_scale_epsilon: float = 1e-4,
+                 use_orthogonal_init: bool = True,
+                 orthogonal_gain: float = 1.0,
+                 actor_orthogonal_gain: float = 0.01,
+                 critic_orthogonal_gain: float = 1.0,
+                 use_value_clipping: bool = False,
+                 value_clip_range: float = 200.0,
                  # Logging
                  device: str = 'auto',
                  verbose: bool = False,
@@ -164,6 +256,20 @@ class MultiObjectiveSAC:
         self.tau = tau
         self.batch_size = batch_size
         self.verbose = verbose
+        
+        # Optimization features
+        self.use_lr_annealing = use_lr_annealing
+        self.lr_annealing_type = lr_annealing_type
+        self.lr_annealing_steps = lr_annealing_steps
+        self.lr_min_factor = lr_min_factor
+        self.lr_decay_rate = lr_decay_rate
+        self.use_reward_scaling = use_reward_scaling
+        self.use_orthogonal_init = use_orthogonal_init
+        self.orthogonal_gain = orthogonal_gain
+        self.actor_orthogonal_gain = actor_orthogonal_gain
+        self.critic_orthogonal_gain = critic_orthogonal_gain
+        self.use_value_clipping = use_value_clipping
+        self.value_clip_range = value_clip_range
         
         # Device setup
         if device == 'auto':
@@ -182,6 +288,19 @@ class MultiObjectiveSAC:
             else:
                 print("WARNING: Using CPU - training will be very slow!")
                 print("Make sure CUDA is available and the job requests a GPU.")
+            
+            # Print optimization features status
+            print(f"Optimization features enabled:")
+            print(f"  LR Annealing: {self.use_lr_annealing}")
+            if self.use_lr_annealing:
+                print(f"    Type: {self.lr_annealing_type}")
+                print(f"    Steps: {self.lr_annealing_steps}")
+                print(f"    Min factor: {self.lr_min_factor}")
+            print(f"  Reward Scaling: {self.use_reward_scaling}")
+            print(f"  Orthogonal Init: {self.use_orthogonal_init}")
+            print(f"  Value Clipping: {self.use_value_clipping}")
+            if self.use_value_clipping:
+                print(f"    Clip range: {self.value_clip_range}")
         
         # Multi-objective weights
         if weights is None:
@@ -191,10 +310,28 @@ class MultiObjectiveSAC:
             self.weights = np.array(weights)
             self.weights = self.weights / np.sum(self.weights)  # Normalize
         
+        # Reward scaling statistics
+        if self.use_reward_scaling:
+            self.reward_rms = RunningMeanStd(shape=(reward_dim,), epsilon=reward_scale_epsilon)
+        
         # Networks
-        self.actor = Actor(state_dim, action_dim, actor_hidden_dims).to(self.device)
-        self.critic1 = Critic(state_dim, action_dim, reward_dim, critic_hidden_dims).to(self.device)
-        self.critic2 = Critic(state_dim, action_dim, reward_dim, critic_hidden_dims).to(self.device)
+        self.actor = Actor(
+            state_dim, action_dim, actor_hidden_dims,
+            use_orthogonal_init=use_orthogonal_init,
+            orthogonal_gain=actor_orthogonal_gain
+        ).to(self.device)
+        
+        self.critic1 = Critic(
+            state_dim, action_dim, reward_dim, critic_hidden_dims,
+            use_orthogonal_init=use_orthogonal_init,
+            orthogonal_gain=critic_orthogonal_gain
+        ).to(self.device)
+        
+        self.critic2 = Critic(
+            state_dim, action_dim, reward_dim, critic_hidden_dims,
+            use_orthogonal_init=use_orthogonal_init,
+            orthogonal_gain=critic_orthogonal_gain
+        ).to(self.device)
         
         # Target networks
         self.target_critic1 = copy.deepcopy(self.critic1)
@@ -205,6 +342,50 @@ class MultiObjectiveSAC:
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=critic_lr)
         self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=critic_lr)
         
+        # Learning rate schedulers
+        self.actor_scheduler = None
+        self.critic1_scheduler = None
+        self.critic2_scheduler = None
+        self.alpha_scheduler = None
+        
+        if self.use_lr_annealing and self.lr_annealing_steps is not None:
+            if self.lr_annealing_type == 'cosine':
+                self.actor_scheduler = CosineAnnealingLR(
+                    self.actor_optimizer, T_max=self.lr_annealing_steps,
+                    eta_min=actor_lr * self.lr_min_factor
+                )
+                self.critic1_scheduler = CosineAnnealingLR(
+                    self.critic1_optimizer, T_max=self.lr_annealing_steps,
+                    eta_min=critic_lr * self.lr_min_factor
+                )
+                self.critic2_scheduler = CosineAnnealingLR(
+                    self.critic2_optimizer, T_max=self.lr_annealing_steps,
+                    eta_min=critic_lr * self.lr_min_factor
+                )
+            elif self.lr_annealing_type == 'linear':
+                self.actor_scheduler = LinearLR(
+                    self.actor_optimizer, start_factor=1.0,
+                    end_factor=self.lr_min_factor, total_iters=self.lr_annealing_steps
+                )
+                self.critic1_scheduler = LinearLR(
+                    self.critic1_optimizer, start_factor=1.0,
+                    end_factor=self.lr_min_factor, total_iters=self.lr_annealing_steps
+                )
+                self.critic2_scheduler = LinearLR(
+                    self.critic2_optimizer, start_factor=1.0,
+                    end_factor=self.lr_min_factor, total_iters=self.lr_annealing_steps
+                )
+            elif self.lr_annealing_type == 'exponential':
+                self.actor_scheduler = ExponentialLR(
+                    self.actor_optimizer, gamma=self.lr_decay_rate
+                )
+                self.critic1_scheduler = ExponentialLR(
+                    self.critic1_optimizer, gamma=self.lr_decay_rate
+                )
+                self.critic2_scheduler = ExponentialLR(
+                    self.critic2_optimizer, gamma=self.lr_decay_rate
+                )
+        
         # Entropy regularization
         self.auto_tune_alpha = auto_tune_alpha
         if auto_tune_alpha:
@@ -214,6 +395,23 @@ class MultiObjectiveSAC:
                 self.target_entropy = target_entropy
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=alpha_lr)
+            
+            # Alpha scheduler
+            if self.use_lr_annealing and self.lr_annealing_steps is not None:
+                if self.lr_annealing_type == 'cosine':
+                    self.alpha_scheduler = CosineAnnealingLR(
+                        self.alpha_optimizer, T_max=self.lr_annealing_steps,
+                        eta_min=alpha_lr * self.lr_min_factor
+                    )
+                elif self.lr_annealing_type == 'linear':
+                    self.alpha_scheduler = LinearLR(
+                        self.alpha_optimizer, start_factor=1.0,
+                        end_factor=self.lr_min_factor, total_iters=self.lr_annealing_steps
+                    )
+                elif self.lr_annealing_type == 'exponential':
+                    self.alpha_scheduler = ExponentialLR(
+                        self.alpha_optimizer, gamma=self.lr_decay_rate
+                    )
         else:
             self.alpha = alpha
         
@@ -268,7 +466,29 @@ class MultiObjectiveSAC:
         """Store transition in replay buffer."""
         # Unscale action for storage
         action_unscaled = self.unscale_action(action)
-        self.replay_buffer.push(state, action_unscaled, reward, next_state, done)
+        
+        # Apply reward scaling if enabled
+        if self.use_reward_scaling:
+            # Update reward statistics
+            self.reward_rms.update(reward.reshape(1, -1))
+            # Store normalized reward
+            scaled_reward = self.reward_rms.normalize(reward)
+        else:
+            scaled_reward = reward
+        
+        self.replay_buffer.push(state, action_unscaled, scaled_reward, next_state, done)
+    
+    def scale_rewards(self, rewards: np.ndarray) -> np.ndarray:
+        """Scale rewards using running statistics."""
+        if self.use_reward_scaling and hasattr(self, 'reward_rms'):
+            return self.reward_rms.normalize(rewards)
+        return rewards
+    
+    def unscale_rewards(self, rewards: np.ndarray) -> np.ndarray:
+        """Unscale rewards using running statistics."""
+        if self.use_reward_scaling and hasattr(self, 'reward_rms'):
+            return self.reward_rms.denormalize(rewards)
+        return rewards
     
     def scalarize_rewards(self, rewards: torch.Tensor) -> torch.Tensor:
         """Scalarize multi-objective rewards using weights."""
@@ -305,6 +525,10 @@ class MultiObjectiveSAC:
         # Update target networks
         self._update_targets()
         
+        # Update learning rate schedulers
+        if self.use_lr_annealing:
+            self._update_schedulers()
+        
         self.training_step += 1
         
         # Log to tensorboard
@@ -313,6 +537,20 @@ class MultiObjectiveSAC:
             self.writer.add_scalar('Loss/Actor', actor_loss, self.training_step)
             self.writer.add_scalar('Loss/Alpha', alpha_loss, self.training_step)
             self.writer.add_scalar('Alpha', self.get_alpha(), self.training_step)
+            
+            # Log learning rates
+            if self.use_lr_annealing:
+                self.writer.add_scalar('LR/Actor', self.actor_optimizer.param_groups[0]['lr'], self.training_step)
+                self.writer.add_scalar('LR/Critic1', self.critic1_optimizer.param_groups[0]['lr'], self.training_step)
+                self.writer.add_scalar('LR/Critic2', self.critic2_optimizer.param_groups[0]['lr'], self.training_step)
+                if self.auto_tune_alpha:
+                    self.writer.add_scalar('LR/Alpha', self.alpha_optimizer.param_groups[0]['lr'], self.training_step)
+            
+            # Log reward scaling statistics if enabled
+            if self.use_reward_scaling and hasattr(self, 'reward_rms'):
+                for i in range(self.reward_dim):
+                    self.writer.add_scalar(f'RewardScaling/Mean_Obj_{i}', self.reward_rms.mean[i], self.training_step)
+                    self.writer.add_scalar(f'RewardScaling/Std_Obj_{i}', np.sqrt(self.reward_rms.var[i]), self.training_step)
         
         return {
             'critic_loss': critic_loss,
@@ -320,6 +558,17 @@ class MultiObjectiveSAC:
             'alpha_loss': alpha_loss,
             'alpha': self.get_alpha()
         }
+    
+    def _update_schedulers(self):
+        """Update learning rate schedulers."""
+        if self.actor_scheduler is not None:
+            self.actor_scheduler.step()
+        if self.critic1_scheduler is not None:
+            self.critic1_scheduler.step()
+        if self.critic2_scheduler is not None:
+            self.critic2_scheduler.step()
+        if self.alpha_scheduler is not None:
+            self.alpha_scheduler.step()
     
     def _update_critics(self, states: torch.Tensor, actions: torch.Tensor, 
                        rewards: torch.Tensor, next_states: torch.Tensor, 
@@ -334,6 +583,11 @@ class MultiObjectiveSAC:
             target_q1_scalar = self.scalarize_rewards(target_q1)
             target_q2_scalar = self.scalarize_rewards(target_q2)
             target_q = torch.min(target_q1_scalar, target_q2_scalar) - self.get_alpha() * next_log_probs
+            
+            # Apply value clipping if enabled
+            if self.use_value_clipping:
+                target_q = torch.clamp(target_q, -self.value_clip_range, self.value_clip_range)
+            
             target_q = rewards + (1 - dones.float().unsqueeze(1)) * self.gamma * target_q
         
         # Current Q-values
@@ -343,6 +597,11 @@ class MultiObjectiveSAC:
         # Scalarize current Q-values
         current_q1_scalar = self.scalarize_rewards(current_q1)
         current_q2_scalar = self.scalarize_rewards(current_q2)
+        
+        # Apply value clipping to current Q-values if enabled
+        if self.use_value_clipping:
+            current_q1_scalar = torch.clamp(current_q1_scalar, -self.value_clip_range, self.value_clip_range)
+            current_q2_scalar = torch.clamp(current_q2_scalar, -self.value_clip_range, self.value_clip_range)
         
         # Critic losses
         critic1_loss = F.mse_loss(current_q1_scalar, target_q)
@@ -401,7 +660,7 @@ class MultiObjectiveSAC:
     
     def save(self, filepath: str):
         """Save model."""
-        torch.save({
+        save_dict = {
             'actor_state_dict': self.actor.state_dict(),
             'critic1_state_dict': self.critic1.state_dict(),
             'critic2_state_dict': self.critic2.state_dict(),
@@ -414,8 +673,25 @@ class MultiObjectiveSAC:
             'alpha_optimizer_state_dict': self.alpha_optimizer.state_dict() if self.auto_tune_alpha else None,
             'weights': self.weights,
             'training_step': self.training_step,
-            'episode_count': self.episode_count
-        }, filepath)
+            'episode_count': self.episode_count,
+            # Optimization parameters
+            'use_lr_annealing': self.use_lr_annealing,
+            'use_reward_scaling': self.use_reward_scaling,
+            'use_orthogonal_init': self.use_orthogonal_init,
+            'use_value_clipping': self.use_value_clipping,
+            'value_clip_range': self.value_clip_range,
+            # Scheduler states
+            'actor_scheduler_state_dict': self.actor_scheduler.state_dict() if self.actor_scheduler else None,
+            'critic1_scheduler_state_dict': self.critic1_scheduler.state_dict() if self.critic1_scheduler else None,
+            'critic2_scheduler_state_dict': self.critic2_scheduler.state_dict() if self.critic2_scheduler else None,
+            'alpha_scheduler_state_dict': self.alpha_scheduler.state_dict() if self.alpha_scheduler else None,
+            # Reward scaling statistics
+            'reward_rms_mean': self.reward_rms.mean if self.use_reward_scaling else None,
+            'reward_rms_var': self.reward_rms.var if self.use_reward_scaling else None,
+            'reward_rms_count': self.reward_rms.count if self.use_reward_scaling else None,
+        }
+        
+        torch.save(save_dict, filepath)
         
         if self.verbose:
             print(f"Model saved to {filepath}")
@@ -442,8 +718,33 @@ class MultiObjectiveSAC:
         self.training_step = checkpoint['training_step']
         self.episode_count = checkpoint['episode_count']
         
+        # Load scheduler states if they exist
+        if self.actor_scheduler and checkpoint.get('actor_scheduler_state_dict'):
+            self.actor_scheduler.load_state_dict(checkpoint['actor_scheduler_state_dict'])
+        if self.critic1_scheduler and checkpoint.get('critic1_scheduler_state_dict'):
+            self.critic1_scheduler.load_state_dict(checkpoint['critic1_scheduler_state_dict'])
+        if self.critic2_scheduler and checkpoint.get('critic2_scheduler_state_dict'):
+            self.critic2_scheduler.load_state_dict(checkpoint['critic2_scheduler_state_dict'])
+        if self.alpha_scheduler and checkpoint.get('alpha_scheduler_state_dict'):
+            self.alpha_scheduler.load_state_dict(checkpoint['alpha_scheduler_state_dict'])
+        
+        # Load reward scaling statistics if they exist
+        if self.use_reward_scaling and checkpoint.get('reward_rms_mean') is not None:
+            self.reward_rms.mean = checkpoint['reward_rms_mean']
+            self.reward_rms.var = checkpoint['reward_rms_var']
+            self.reward_rms.count = checkpoint['reward_rms_count']
+        
         if self.verbose:
             print(f"Model loaded from {filepath}")
+            
+            # Print loaded optimization settings
+            print("Loaded optimization settings:")
+            print(f"  LR Annealing: {checkpoint.get('use_lr_annealing', False)}")
+            print(f"  Reward Scaling: {checkpoint.get('use_reward_scaling', False)}")
+            print(f"  Orthogonal Init: {checkpoint.get('use_orthogonal_init', True)}")
+            print(f"  Value Clipping: {checkpoint.get('use_value_clipping', False)}")
+            if checkpoint.get('use_value_clipping', False):
+                print(f"    Clip range: {checkpoint.get('value_clip_range', 200.0)}")
 
 
 def train_mo_sac(env: gym.Env, 
@@ -457,6 +758,12 @@ def train_mo_sac(env: gym.Env,
                  save_path: str = "mo_sac_model",
                  verbose: bool = False) -> Dict[str, List[float]]:
     """Train Multi-Objective SAC agent."""
+    
+    # Set annealing steps if not set and annealing is enabled
+    if agent.use_lr_annealing and agent.lr_annealing_steps is None:
+        agent.lr_annealing_steps = total_timesteps // train_freq
+        if agent.verbose:
+            print(f"Setting LR annealing steps to {agent.lr_annealing_steps}")
     
     # Training statistics
     episode_rewards = []
@@ -501,7 +808,14 @@ def train_mo_sac(env: gym.Env,
                     memory_used = torch.cuda.memory_allocated(agent.device) / 1024**3
                     memory_total = torch.cuda.get_device_properties(agent.device).total_memory / 1024**3
                     gpu_info = f" | GPU: {memory_used:.1f}/{memory_total:.1f} GB"
-                print(f"Step {timesteps}: {update_info}{gpu_info}")
+                
+                lr_info = ""
+                if agent.use_lr_annealing:
+                    actor_lr = agent.actor_optimizer.param_groups[0]['lr']
+                    critic_lr = agent.critic1_optimizer.param_groups[0]['lr']
+                    lr_info = f" | LR: A={actor_lr:.2e} C={critic_lr:.2e}"
+                
+                print(f"Step {timesteps}: {update_info}{gpu_info}{lr_info}")
         
         # Episode end
         if done:
@@ -509,7 +823,8 @@ def train_mo_sac(env: gym.Env,
             episode_lengths.append(episode_length)
             
             if verbose:
-                print(f"Episode {episode + 1}: Reward {episode_reward}, Length {episode_length}")
+                scalarized_reward = np.sum(episode_reward * agent.weights)
+                print(f"Episode {episode + 1}: Reward {episode_reward}, Scalarized: {scalarized_reward:.3f}, Length {episode_length}")
             
             # Log to tensorboard
             if agent.tensorboard_log:
@@ -529,7 +844,9 @@ def train_mo_sac(env: gym.Env,
         if timesteps % eval_freq == 0 and timesteps >= learning_starts:
             eval_rewards = evaluate_mo_sac(env, agent, eval_episodes, verbose=verbose)
             if verbose:
-                print(f"Evaluation at step {timesteps}: Mean reward {np.mean(eval_rewards, axis=0)}")
+                mean_rewards = np.mean(eval_rewards, axis=0)
+                scalarized_mean = np.mean(np.sum(eval_rewards * agent.weights, axis=1))
+                print(f"Evaluation at step {timesteps}: Mean reward {mean_rewards}, Scalarized: {scalarized_mean:.3f}")
         
         # Save model
         if timesteps % save_freq == 0 and timesteps >= learning_starts:

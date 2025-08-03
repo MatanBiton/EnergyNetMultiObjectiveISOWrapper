@@ -63,6 +63,21 @@ def train_mo_sac_on_energynet(
     buffer_capacity: int = 1000000,
     batch_size: int = 256,
     
+    # Optimization parameters (NEW)
+    use_lr_annealing: bool = False,
+    lr_annealing_type: str = 'cosine',
+    lr_annealing_steps: int = None,
+    lr_min_factor: float = 0.1,
+    lr_decay_rate: float = 0.95,
+    use_reward_scaling: bool = False,
+    reward_scale_epsilon: float = 1e-4,
+    use_orthogonal_init: bool = True,
+    orthogonal_gain: float = 1.0,
+    actor_orthogonal_gain: float = 0.01,
+    critic_orthogonal_gain: float = 1.0,
+    use_value_clipping: bool = False,
+    value_clip_range: float = 200.0,
+    
     # Logging parameters
     experiment_name: str = "mo_sac_energynet",
     save_dir: str = "energynet_experiments",
@@ -138,6 +153,20 @@ def train_mo_sac_on_energynet(
         critic_hidden_dims=critic_hidden_dims,
         buffer_capacity=buffer_capacity,
         batch_size=batch_size,
+        # Optimization parameters
+        use_lr_annealing=use_lr_annealing,
+        lr_annealing_type=lr_annealing_type,
+        lr_annealing_steps=lr_annealing_steps,
+        lr_min_factor=lr_min_factor,
+        lr_decay_rate=lr_decay_rate,
+        use_reward_scaling=use_reward_scaling,
+        reward_scale_epsilon=reward_scale_epsilon,
+        use_orthogonal_init=use_orthogonal_init,
+        orthogonal_gain=orthogonal_gain,
+        actor_orthogonal_gain=actor_orthogonal_gain,
+        critic_orthogonal_gain=critic_orthogonal_gain,
+        use_value_clipping=use_value_clipping,
+        value_clip_range=value_clip_range,
         verbose=verbose,
         tensorboard_log=tensorboard_path
     )
@@ -149,6 +178,26 @@ def train_mo_sac_on_energynet(
     print(f"  Actor hidden dims: {actor_hidden_dims}")
     print(f"  Critic hidden dims: {critic_hidden_dims}")
     print(f"  Buffer capacity: {buffer_capacity}, Batch size: {batch_size}")
+    
+    print(f"\nOptimization Features:")
+    print(f"  LR Annealing: {use_lr_annealing}")
+    if use_lr_annealing:
+        print(f"    Type: {lr_annealing_type}")
+        print(f"    Steps: {lr_annealing_steps}")
+        print(f"    Min factor: {lr_min_factor}")
+        if lr_annealing_type == 'exponential':
+            print(f"    Decay rate: {lr_decay_rate}")
+    print(f"  Reward Scaling: {use_reward_scaling}")
+    if use_reward_scaling:
+        print(f"    Epsilon: {reward_scale_epsilon}")
+    print(f"  Orthogonal Init: {use_orthogonal_init}")
+    if use_orthogonal_init:
+        print(f"    Actor gain: {actor_orthogonal_gain}")
+        print(f"    Critic gain: {critic_orthogonal_gain}")
+    print(f"  Value Clipping: {use_value_clipping}")
+    if use_value_clipping:
+        print(f"    Clip range: {value_clip_range}")
+    
     if tensorboard_path:
         print(f"  Tensorboard log: {tensorboard_path}")
     
@@ -175,7 +224,21 @@ def train_mo_sac_on_energynet(
             'actor_hidden_dims': actor_hidden_dims,
             'critic_hidden_dims': critic_hidden_dims,
             'buffer_capacity': buffer_capacity,
-            'batch_size': batch_size
+            'batch_size': batch_size,
+            # Optimization parameters
+            'use_lr_annealing': use_lr_annealing,
+            'lr_annealing_type': lr_annealing_type,
+            'lr_annealing_steps': lr_annealing_steps,
+            'lr_min_factor': lr_min_factor,
+            'lr_decay_rate': lr_decay_rate,
+            'use_reward_scaling': use_reward_scaling,
+            'reward_scale_epsilon': reward_scale_epsilon,
+            'use_orthogonal_init': use_orthogonal_init,
+            'orthogonal_gain': orthogonal_gain,
+            'actor_orthogonal_gain': actor_orthogonal_gain,
+            'critic_orthogonal_gain': critic_orthogonal_gain,
+            'use_value_clipping': use_value_clipping,
+            'value_clip_range': value_clip_range,
         }
     }
     
@@ -297,6 +360,35 @@ def main():
     parser.add_argument('--batch-size', type=int, default=256,
                        help='Batch size')
     
+    # Optimization parameters (NEW)
+    parser.add_argument('--use-lr-annealing', action='store_true',
+                       help='Enable learning rate annealing')
+    parser.add_argument('--lr-annealing-type', type=str, default='cosine',
+                       choices=['cosine', 'linear', 'exponential'],
+                       help='Type of learning rate annealing')
+    parser.add_argument('--lr-annealing-steps', type=int, default=None,
+                       help='Number of steps for LR annealing (default: total_timesteps/train_freq)')
+    parser.add_argument('--lr-min-factor', type=float, default=0.1,
+                       help='Minimum LR as fraction of initial LR')
+    parser.add_argument('--lr-decay-rate', type=float, default=0.95,
+                       help='Decay rate for exponential LR annealing')
+    parser.add_argument('--use-reward-scaling', action='store_true',
+                       help='Enable reward scaling/normalization')
+    parser.add_argument('--reward-scale-epsilon', type=float, default=1e-4,
+                       help='Epsilon for reward scaling')
+    parser.add_argument('--disable-orthogonal-init', action='store_true',
+                       help='Disable orthogonal initialization (use Xavier instead)')
+    parser.add_argument('--orthogonal-gain', type=float, default=1.0,
+                       help='Gain for orthogonal initialization')
+    parser.add_argument('--actor-orthogonal-gain', type=float, default=0.01,
+                       help='Gain for actor orthogonal initialization')
+    parser.add_argument('--critic-orthogonal-gain', type=float, default=1.0,
+                       help='Gain for critic orthogonal initialization')
+    parser.add_argument('--use-value-clipping', action='store_true',
+                       help='Enable value clipping for stability')
+    parser.add_argument('--value-clip-range', type=float, default=200.0,
+                       help='Value clipping range')
+    
     # Environment parameters
     parser.add_argument('--use-dispatch-action', action='store_true',
                        help='Use dispatch action in environment')
@@ -336,6 +428,20 @@ def main():
         tau=args.tau,
         buffer_capacity=args.buffer_size,
         batch_size=args.batch_size,
+        # Optimization parameters
+        use_lr_annealing=args.use_lr_annealing,
+        lr_annealing_type=args.lr_annealing_type,
+        lr_annealing_steps=args.lr_annealing_steps,
+        lr_min_factor=args.lr_min_factor,
+        lr_decay_rate=args.lr_decay_rate,
+        use_reward_scaling=args.use_reward_scaling,
+        reward_scale_epsilon=args.reward_scale_epsilon,
+        use_orthogonal_init=not args.disable_orthogonal_init,
+        orthogonal_gain=args.orthogonal_gain,
+        actor_orthogonal_gain=args.actor_orthogonal_gain,
+        critic_orthogonal_gain=args.critic_orthogonal_gain,
+        use_value_clipping=args.use_value_clipping,
+        value_clip_range=args.value_clip_range,
         experiment_name=args.experiment_name,
         save_dir=args.save_dir,
         verbose=args.verbose,

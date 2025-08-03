@@ -7,12 +7,24 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
 
-# Multi-Objective SAC EnergyNet Training Script for SLURM (Version 2 - Fixed)
+# Multi-Objective SAC EnergyNet Training Script for SLURM (Version 2 - With Optimizations)
 # This script handles permission and path issues on SLURM clusters
+# Supports all optimization parameters for Multi-Objective SAC
 #
-# Usage: 
-#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh                # Default training
-#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 200000         # Custom episodes
+# Usage Examples:
+#   # Basic training (default parameters)
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh
+#
+#   # Custom timesteps
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 200000
+#
+#   # With optimizations (use environment variables)
+#   ENABLE_LR_ANNEALING=true ENABLE_REWARD_SCALING=true \
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 500000
+#
+#   # Full optimization suite
+#   ENABLE_ALL_OPTIMIZATIONS=true LR_ANNEALING_TYPE=cosine VALUE_CLIP_RANGE=150.0 \
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh 1000000
 
 echo "=========================================="
 echo "Multi-Objective SAC EnergyNet Training v2 (SLURM)"
@@ -281,10 +293,60 @@ EPISODES=${1:-100000}  # Default 100k episodes, or use first argument
 LEARNING_RATE=${2:-0.0003}  # Default learning rate
 BATCH_SIZE=${3:-256}  # Default batch size
 
+# Optimization parameters (controlled via environment variables)
+# Learning Rate Annealing
+ENABLE_LR_ANNEALING=${ENABLE_LR_ANNEALING:-false}
+LR_ANNEALING_TYPE=${LR_ANNEALING_TYPE:-cosine}
+LR_ANNEALING_STEPS=${LR_ANNEALING_STEPS:-}  # Default: auto-calculated
+LR_MIN_FACTOR=${LR_MIN_FACTOR:-0.1}
+LR_DECAY_RATE=${LR_DECAY_RATE:-0.95}
+
+# Reward Scaling
+ENABLE_REWARD_SCALING=${ENABLE_REWARD_SCALING:-false}
+REWARD_SCALE_EPSILON=${REWARD_SCALE_EPSILON:-1e-4}
+
+# Orthogonal Initialization
+DISABLE_ORTHOGONAL_INIT=${DISABLE_ORTHOGONAL_INIT:-false}
+ORTHOGONAL_GAIN=${ORTHOGONAL_GAIN:-1.0}
+ACTOR_ORTHOGONAL_GAIN=${ACTOR_ORTHOGONAL_GAIN:-0.01}
+CRITIC_ORTHOGONAL_GAIN=${CRITIC_ORTHOGONAL_GAIN:-1.0}
+
+# Value Clipping
+ENABLE_VALUE_CLIPPING=${ENABLE_VALUE_CLIPPING:-false}
+VALUE_CLIP_RANGE=${VALUE_CLIP_RANGE:-200.0}
+
+# Special option to enable all optimizations with good defaults
+if [ "$ENABLE_ALL_OPTIMIZATIONS" = "true" ]; then
+    ENABLE_LR_ANNEALING=true
+    ENABLE_REWARD_SCALING=true
+    ENABLE_VALUE_CLIPPING=true
+    DISABLE_ORTHOGONAL_INIT=false
+    echo "🚀 All optimizations enabled with default parameters"
+fi
+
 echo "Training Parameters:"
 echo "  Episodes: $EPISODES"
 echo "  Learning Rate: $LEARNING_RATE"
 echo "  Batch Size: $BATCH_SIZE"
+echo ""
+echo "Optimization Parameters:"
+echo "  LR Annealing: $ENABLE_LR_ANNEALING"
+if [ "$ENABLE_LR_ANNEALING" = "true" ]; then
+    echo "    Type: $LR_ANNEALING_TYPE"
+    echo "    Min Factor: $LR_MIN_FACTOR"
+    [ -n "$LR_ANNEALING_STEPS" ] && echo "    Steps: $LR_ANNEALING_STEPS"
+    [ "$LR_ANNEALING_TYPE" = "exponential" ] && echo "    Decay Rate: $LR_DECAY_RATE"
+fi
+echo "  Reward Scaling: $ENABLE_REWARD_SCALING"
+[ "$ENABLE_REWARD_SCALING" = "true" ] && echo "    Epsilon: $REWARD_SCALE_EPSILON"
+echo "  Orthogonal Init: $([ "$DISABLE_ORTHOGONAL_INIT" = "true" ] && echo "false" || echo "true")"
+if [ "$DISABLE_ORTHOGONAL_INIT" != "true" ]; then
+    echo "    General Gain: $ORTHOGONAL_GAIN"
+    echo "    Actor Gain: $ACTOR_ORTHOGONAL_GAIN"
+    echo "    Critic Gain: $CRITIC_ORTHOGONAL_GAIN"
+fi
+echo "  Value Clipping: $ENABLE_VALUE_CLIPPING"
+[ "$ENABLE_VALUE_CLIPPING" = "true" ] && echo "    Clip Range: $VALUE_CLIP_RANGE"
 echo ""
 
 # Create Python arguments array
@@ -298,6 +360,33 @@ PYTHON_ARGS=(
     "--save-freq" "10000"
     "--verbose"
 )
+
+# Add optimization arguments
+if [ "$ENABLE_LR_ANNEALING" = "true" ]; then
+    PYTHON_ARGS+=("--use-lr-annealing")
+    PYTHON_ARGS+=("--lr-annealing-type" "$LR_ANNEALING_TYPE")
+    PYTHON_ARGS+=("--lr-min-factor" "$LR_MIN_FACTOR")
+    [ -n "$LR_ANNEALING_STEPS" ] && PYTHON_ARGS+=("--lr-annealing-steps" "$LR_ANNEALING_STEPS")
+    [ "$LR_ANNEALING_TYPE" = "exponential" ] && PYTHON_ARGS+=("--lr-decay-rate" "$LR_DECAY_RATE")
+fi
+
+if [ "$ENABLE_REWARD_SCALING" = "true" ]; then
+    PYTHON_ARGS+=("--use-reward-scaling")
+    PYTHON_ARGS+=("--reward-scale-epsilon" "$REWARD_SCALE_EPSILON")
+fi
+
+if [ "$DISABLE_ORTHOGONAL_INIT" = "true" ]; then
+    PYTHON_ARGS+=("--disable-orthogonal-init")
+else
+    PYTHON_ARGS+=("--orthogonal-gain" "$ORTHOGONAL_GAIN")
+    PYTHON_ARGS+=("--actor-orthogonal-gain" "$ACTOR_ORTHOGONAL_GAIN")
+    PYTHON_ARGS+=("--critic-orthogonal-gain" "$CRITIC_ORTHOGONAL_GAIN")
+fi
+
+if [ "$ENABLE_VALUE_CLIPPING" = "true" ]; then
+    PYTHON_ARGS+=("--use-value-clipping")
+    PYTHON_ARGS+=("--value-clip-range" "$VALUE_CLIP_RANGE")
+fi
 
 # Training arguments are set above - no additional GPU logic needed here
 
