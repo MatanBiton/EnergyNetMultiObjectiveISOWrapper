@@ -1,4 +1,5 @@
 from .generic_pcs_agent import GenericPCSAgent
+import torch
 
 class ConstantPCSAgent(GenericPCSAgent):
     def __init__(self, action):
@@ -6,4 +7,4 @@ class ConstantPCSAgent(GenericPCSAgent):
         self.action = action
 
     def predict(self, obs, deterministic=True, **kwargs):
-        return self.action, None
+        return torch.tensor(self.action), None
