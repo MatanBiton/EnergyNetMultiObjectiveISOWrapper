@@ -32,7 +32,7 @@ class MultiObjectiveISOEnv(ISOEnv):
         self.reward_dim = 2
 
     def _calculate_cost_reward(self, info):
-        return (-1)*info["dispatch_cost"]
+        return (-1)*(info["dispatch_cost"]+info["reserve_cost"])
     
     def _calculate_stability_reward(self, info):
         return (-1) * info["shortfall"]

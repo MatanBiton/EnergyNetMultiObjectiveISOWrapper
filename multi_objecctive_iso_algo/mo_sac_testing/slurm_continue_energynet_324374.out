@@ -1,0 +1,169 @@
+==========================================
+Multi-Objective SAC EnergyNet Continue Training (SLURM)
+==========================================
+Job ID: 324374
+Job Name: mo_sac_continue_energynet
+Node: lambda1
+CPUs: 4
+GPUs: 0
+Memory: 32768 MB
+==========================================
+Original directory (where files are): /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing
+Model path: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Loading CUDA modules...
+No CUDA modules loaded
+✓ Set CUDA environment variables
+Activating conda environment...
+✓ Activated conda environment: IsoMOEnergyNet
+Found Python: python3 (/home/matan.biton/miniconda3/envs/IsoMOEnergyNet/bin/python3)
+Python version: Python 3.10.9
+Python location: /home/matan.biton/miniconda3/envs/IsoMOEnergyNet/bin/python3
+
+Checking CUDA availability...
+CUDA_HOME: /usr/local/cuda
+CUDA_PATH: /usr/local/cuda
+GPU Status:
+0, NVIDIA GeForce GTX 1080 Ti, 11264, 2
+Checking PyTorch CUDA support...
+PyTorch version: 2.7.0+cu126
+PyTorch CUDA available: True
+✓ PyTorch CUDA support is working
+
+Creating working directory: /tmp/energynet_continue_training_matan.biton_3624301
+Copying files to working directory...
+Copied multi_objective_sac.py from parent directory
+Copied EnergyNetMoISO directory from /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/../../EnergyNetMoISO
+Changed to working directory: /tmp/energynet_continue_training_matan.biton_3624301
+Files in working directory:
+total 18848
+drwxr-xr-x 7 matan.biton domain^users     4096 Aug  5 22:24 .
+drwxrwxrwt 1 root        root         19025920 Aug  5 22:24 ..
+-rwxr-xr-x 1 matan.biton domain^users    11270 Aug  5 22:24 average_tensorboard_logs.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 checkpoints
+-rw-r--r-- 1 matan.biton domain^users    19834 Aug  5 22:24 continue_train_energynet.py
+drwxr-xr-x 4 matan.biton domain^users     4096 Aug  5 22:24 EnergyNetMoISO
+-rw-r--r-- 1 matan.biton domain^users     9719 Aug  5 22:24 examples.py
+-rw-r--r-- 1 matan.biton domain^users       37 Aug  5 22:24 __init__.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 logs
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 models
+-rw-r--r-- 1 matan.biton domain^users    46082 Aug  5 22:24 multi_objective_sac.py
+-rw-r--r-- 1 matan.biton domain^users    10101 Aug  5 22:24 optimization_examples.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 plots
+-rw-r--r-- 1 matan.biton domain^users     4016 Aug  5 22:24 quick_test.py
+-rw-r--r-- 1 matan.biton domain^users      503 Aug  5 22:24 requirements.txt
+-rwxr-xr-x 1 matan.biton domain^users        0 Aug  5 22:24 test_averaging.py
+-rw-r--r-- 1 matan.biton domain^users    17868 Aug  5 22:24 test_environments.py
+-rw-r--r-- 1 matan.biton domain^users     2970 Aug  5 22:24 test_gpu_availability.py
+-rwxr-xr-x 1 matan.biton domain^users     6012 Aug  5 22:24 test_gpu_quick.py
+-rw-r--r-- 1 matan.biton domain^users     4458 Aug  5 22:24 test_imports.py
+-rw-r--r-- 1 matan.biton domain^users    14966 Aug  5 22:24 test_mo_sac.py
+-rw-r--r-- 1 matan.biton domain^users    12212 Aug  5 22:24 test_mo_sac_quick.py
+-rw-r--r-- 1 matan.biton domain^users    12772 Aug  5 22:24 test_optimizations.py
+-rw-r--r-- 1 matan.biton domain^users    18662 Aug  5 22:24 train_energynet.py
+
+Testing Python imports...
+Python path will include:
+  - Current directory: /tmp/energynet_continue_training_matan.biton_3624301
+  - Parent directories will be added by the script
+Testing basic dependencies...
+✓ Basic dependencies (torch, numpy, gymnasium, matplotlib) available
+Testing multi_objective_sac import...
+✓ multi_objective_sac import successful
+Testing EnergyNetMoISO import...
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+✓ EnergyNetMoISO import successful
+
+Running under SLURM job manager
+Set OMP_NUM_THREADS to 4
+GPU devices: 0
+✓ GPU training enabled
+Continue Training Parameters:
+  Model Path: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+  Additional Timesteps: 20000
+  Experiment Name: testing
+  Random Seed: Not specified (will use random)
+
+Environment Configuration:
+  Use Dispatch Action: false
+  Dispatch Strategy: PROPORTIONAL
+  Trained PCS Model: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth
+  ✓ PCS model file found
+
+Optimization Parameter Overrides:
+  LR Annealing: false
+  Reward Scaling: false
+  Value Clipping: false
+
+Running EnergyNet continue training...
+Command: python3 continue_train_energynet.py --model-path /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth --total-timesteps 20000 --save-dir . --experiment-name continue_train_energynet_testing --eval-freq 5000 --save-freq 10000 --verbose --dispatch-strategy PROPORTIONAL --trained-pcs-model /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth
+
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+================================================================================
+Continuing MO-SAC Training on EnergyNet MoISO Environment
+Loading from: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Experiment: continue_train_energynet_testing
+================================================================================
+Error loading model: 'str' object has no attribute 'predict'
+Agent 0 loading status: Failed
+Environment Configuration:
+  State dimension: 3
+  Action dimension: 2
+  Reward dimension: 2
+  Action bounds: (1.0, 10.0)
+  Environment config: {'use_dispatch_action': False, 'dispatch_strategy': 'PROPORTIONAL', 'trained_pcs_model': '/home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth'}
+\nLoading existing model configuration...
+Copying results back to original directory...
+Warning: Could not copy config files back
+Warning: Could not copy results files back
+Logs (including TensorBoard) copied to: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/logs/
+
+==========================================
+EnergyNet continue training failed with errors!
+==========================================
+SLURM Job ID: 324374
+Exit code: 1
+Check slurm_continue_energynet_324374.err for error details
+
+Working directory contents at failure:
+total 18852
+drwxr-xr-x 8 matan.biton domain^users     4096 Aug  5 22:24 .
+drwxrwxrwt 1 root        root         19025920 Aug  5 22:25 ..
+-rwxr-xr-x 1 matan.biton domain^users    11270 Aug  5 22:24 average_tensorboard_logs.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 checkpoints
+-rw-r--r-- 1 matan.biton domain^users    19834 Aug  5 22:24 continue_train_energynet.py
+drwxr-xr-x 4 matan.biton domain^users     4096 Aug  5 22:24 EnergyNetMoISO
+-rw-r--r-- 1 matan.biton domain^users     9719 Aug  5 22:24 examples.py
+-rw-r--r-- 1 matan.biton domain^users       37 Aug  5 22:24 __init__.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:25 logs
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 models
+-rw-r--r-- 1 matan.biton domain^users    46082 Aug  5 22:24 multi_objective_sac.py
+-rw-r--r-- 1 matan.biton domain^users    10101 Aug  5 22:24 optimization_examples.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 plots
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:24 __pycache__
+-rw-r--r-- 1 matan.biton domain^users     4016 Aug  5 22:24 quick_test.py
+-rw-r--r-- 1 matan.biton domain^users      503 Aug  5 22:24 requirements.txt
+-rwxr-xr-x 1 matan.biton domain^users        0 Aug  5 22:24 test_averaging.py
+-rw-r--r-- 1 matan.biton domain^users    17868 Aug  5 22:24 test_environments.py
+-rw-r--r-- 1 matan.biton domain^users     2970 Aug  5 22:24 test_gpu_availability.py
+-rwxr-xr-x 1 matan.biton domain^users     6012 Aug  5 22:24 test_gpu_quick.py
+-rw-r--r-- 1 matan.biton domain^users     4458 Aug  5 22:24 test_imports.py
+-rw-r--r-- 1 matan.biton domain^users    14966 Aug  5 22:24 test_mo_sac.py
+-rw-r--r-- 1 matan.biton domain^users    12212 Aug  5 22:24 test_mo_sac_quick.py
+-rw-r--r-- 1 matan.biton domain^users    12772 Aug  5 22:24 test_optimizations.py
+-rw-r--r-- 1 matan.biton domain^users    18662 Aug  5 22:24 train_energynet.py
+
+Common troubleshooting:
+  1. Check if model path exists: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+  2. Check if model file is compatible with current code
+  3. Check Python package compatibility
+  4. Check available GPU memory
+  5. Try with CPU-only training (remove --gres=gpu:1)
+Cleaning up temporary directory: /tmp/energynet_continue_training_matan.biton_3624301

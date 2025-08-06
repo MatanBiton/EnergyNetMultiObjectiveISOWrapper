@@ -1,0 +1,31 @@
+{
+  "continued_from": "/home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth",
+  "env_config": {
+    "use_dispatch_action": false,
+    "dispatch_strategy": "PROPORTIONAL",
+    "trained_pcs_model": "/home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth"
+  },
+  "training_params": {
+    "total_timesteps": 100,
+    "learning_starts": 10000,
+    "train_freq": 1,
+    "eval_freq": 20000,
+    "eval_episodes": 10,
+    "save_freq": 100000
+  },
+  "agent_params": {},
+  "reproducibility": {
+    "seed": null
+  },
+  "initial_performance": {
+    "mean_rewards": [
+      -728730.5332308895,
+      -43.6526661544478
+    ],
+    "std_rewards": [
+      2886.6444408737993,
+      14.433222204368747
+    ],
+    "scalarized_mean": -437255.78100499546
+  }
+}

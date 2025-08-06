@@ -1,0 +1,31 @@
+{
+  "continued_from": "/home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth",
+  "env_config": {
+    "use_dispatch_action": false,
+    "dispatch_strategy": "PROPORTIONAL",
+    "trained_pcs_model": null
+  },
+  "training_params": {
+    "total_timesteps": 5000,
+    "learning_starts": 10000,
+    "train_freq": 1,
+    "eval_freq": 5000,
+    "eval_episodes": 10,
+    "save_freq": 10000
+  },
+  "agent_params": {},
+  "reproducibility": {
+    "seed": null
+  },
+  "initial_performance": {
+    "mean_rewards": [
+      -759123.1907127495,
+      -195.61595356374747
+    ],
+    "std_rewards": [
+      8230.428249175531,
+      41.152141245877935
+    ],
+    "scalarized_mean": -455552.16080907517
+  }
+}

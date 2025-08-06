@@ -229,6 +229,9 @@ echo ""
 echo "  # Start tensorboard for all runs:"
 echo "  tensorboard --logdir $SCRIPT_DIR/logs/ --host 0.0.0.0 --port 6006"
 echo ""
+echo "  # View averaged results (if created):"
+echo "  tensorboard --logdir $SCRIPT_DIR/logs/train_energynet_${EXPERIMENT_NAME}_averaged --host 0.0.0.0 --port 6006"
+echo ""
 
 # Create a summary file with all run information
 SUMMARY_FILE="$SCRIPT_DIR/multiseed_summary_${EXPERIMENT_NAME}_$(date +%Y%m%d_%H%M%S).txt"
@@ -272,18 +275,74 @@ SUMMARY_FILE="$SCRIPT_DIR/multiseed_summary_${EXPERIMENT_NAME}_$(date +%Y%m%d_%H
         
         echo "  Run $RUN_NUMBER: train_energynet_${SEED_EXPERIMENT_NAME} (seed: $SEED) - $STATUS"
     done
+    echo ""
+    echo "Averaged Results:"
+    if [ $SUCCESSFUL_RUNS -ge 2 ]; then
+        echo "  Averaged TensorBoard logs: logs/train_energynet_${EXPERIMENT_NAME}_averaged"
+        echo "  Summary report: averaged_summary_${EXPERIMENT_NAME}.txt"
+        echo "  View averaged results: tensorboard --logdir logs/train_energynet_${EXPERIMENT_NAME}_averaged"
+    else
+        echo "  Not available (need at least 2 successful runs)"
+    fi
 } > "$SUMMARY_FILE"
 
 echo "Summary saved to: $SUMMARY_FILE"
+
+# Create averaged TensorBoard logs if we have at least 2 successful runs
+if [ $SUCCESSFUL_RUNS -ge 2 ]; then
+    echo ""
+    echo "=========================================="
+    echo "Creating Averaged TensorBoard Logs"
+    echo "=========================================="
+    echo "Averaging results from $SUCCESSFUL_RUNS successful runs..."
+    
+    # Check if averaging script exists
+    AVERAGING_SCRIPT="$SCRIPT_DIR/average_tensorboard_logs.py"
+    if [ -f "$AVERAGING_SCRIPT" ]; then
+        echo "Using averaging script: $AVERAGING_SCRIPT"
+        
+        # Try to run the averaging script
+        echo "Running TensorBoard log averaging..."
+        if $PYTHON_CMD "$AVERAGING_SCRIPT" "$SCRIPT_DIR/logs" "$EXPERIMENT_NAME" --num-runs 5 --seeds "${SEEDS[@]}" 2>/dev/null; then
+            echo "✓ Successfully created averaged TensorBoard logs"
+            echo ""
+            echo "📊 Averaged Results Available:"
+            echo "  Averaged logs: $SCRIPT_DIR/logs/train_energynet_${EXPERIMENT_NAME}_averaged"
+            echo "  Summary report: $SCRIPT_DIR/averaged_summary_${EXPERIMENT_NAME}.txt"
+            echo ""
+            echo "To view averaged results in TensorBoard:"
+            echo "  tensorboard --logdir $SCRIPT_DIR/logs/train_energynet_${EXPERIMENT_NAME}_averaged --host 0.0.0.0 --port 6006"
+            echo ""
+            echo "To view all runs (including averaged) in TensorBoard:"
+            echo "  tensorboard --logdir $SCRIPT_DIR/logs/ --host 0.0.0.0 --port 6006"
+        else
+            echo "⚠ Warning: Failed to create averaged logs (TensorBoard may not be available)"
+            echo "  You can still view individual run logs in TensorBoard"
+        fi
+    else
+        echo "⚠ Warning: Averaging script not found at $AVERAGING_SCRIPT"
+        echo "  Individual run logs are still available in: $SCRIPT_DIR/logs/"
+    fi
+else
+    echo ""
+    echo "⚠ Not enough successful runs ($SUCCESSFUL_RUNS) to create averaged logs"
+    echo "  Need at least 2 successful runs for averaging"
+fi
 
 # Exit with appropriate code
 if [ $FAILED_RUNS -eq 0 ]; then
     echo ""
     echo "🎉 All 5 runs completed successfully!"
+    if [ $SUCCESSFUL_RUNS -ge 2 ]; then
+        echo "📊 Averaged TensorBoard logs have been created for comprehensive analysis!"
+    fi
     exit 0
 elif [ $SUCCESSFUL_RUNS -gt 0 ]; then
     echo ""
     echo "⚠ Partial success: $SUCCESSFUL_RUNS out of 5 runs completed"
+    if [ $SUCCESSFUL_RUNS -ge 2 ]; then
+        echo "📊 Averaged TensorBoard logs created from successful runs"
+    fi
     exit 1
 else
     echo ""

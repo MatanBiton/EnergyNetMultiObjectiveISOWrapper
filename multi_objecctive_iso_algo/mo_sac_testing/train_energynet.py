@@ -22,17 +22,51 @@ if root_dir not in sys.path:
 from multi_objective_sac import MultiObjectiveSAC, train_mo_sac, evaluate_mo_sac
 from EnergyNetMoISO.MoISOEnv import MultiObjectiveISOEnv
 from EnergyNetMoISO.pcs_models.constant_pcs_agent import ConstantPCSAgent
+from EnergyNetMoISO.pcs_models.sac_pcs_agent import SACPCSAgent
 
 
 def create_energynet_env(**kwargs) -> MultiObjectiveISOEnv:
     """Create EnergyNet MoISO environment with default configuration."""
     default_config = {
-        'use_dispatch_action': False,
+        'use_dispatch_action': True,
         'dispatch_strategy': "PROPORTIONAL",
-        'trained_pcs_model': ConstantPCSAgent(1),
+        'trained_pcs_model': None,
         # Add other environment parameters as needed
     }
     default_config.update(kwargs)
+    
+    # Handle trained_pcs_model if it's a path string
+    trained_pcs_model_path = default_config.get('trained_pcs_model')
+    if trained_pcs_model_path and isinstance(trained_pcs_model_path, str):
+        if os.path.exists(trained_pcs_model_path):
+            print(f"Loading PCS model from: {trained_pcs_model_path}")
+            try:
+                # Create SAC PCS agent and load the trained model
+                # We need to create a dummy environment to get the action/observation spaces
+                from energy_net.env.pcs_unit_v0 import PCSUnitEnv
+                temp_env = PCSUnitEnv()
+                state_dim = temp_env.observation_space.shape[0]
+                action_dim = temp_env.action_space.shape[0]
+                action_bounds = (float(temp_env.action_space.low[0]), float(temp_env.action_space.high[0]))
+                temp_env.close()
+                
+                # Create and load the SAC PCS agent
+                pcs_agent = SACPCSAgent(
+                    state_dim=state_dim,
+                    action_dim=action_dim,
+                    action_bounds=action_bounds
+                )
+                pcs_agent.load(trained_pcs_model_path)
+                default_config['trained_pcs_model'] = pcs_agent
+                print(f"✓ Successfully loaded PCS model")
+            except Exception as e:
+                print(f"Warning: Failed to load PCS model from {trained_pcs_model_path}: {e}")
+                print("Using default PCS behavior instead")
+                default_config['trained_pcs_model'] = None
+        else:
+            print(f"Warning: PCS model file not found: {trained_pcs_model_path}")
+            print("Using default PCS behavior instead")
+            default_config['trained_pcs_model'] = None
     
     return MultiObjectiveISOEnv(**default_config)
 
@@ -77,6 +111,9 @@ def train_mo_sac_on_energynet(
     critic_orthogonal_gain: float = 1.0,
     use_value_clipping: bool = False,
     value_clip_range: float = 200.0,
+    
+    # Reproducibility parameters
+    seed: int = None,
     
     # Logging parameters
     experiment_name: str = "mo_sac_energynet",
@@ -239,6 +276,9 @@ def train_mo_sac_on_energynet(
             'critic_orthogonal_gain': critic_orthogonal_gain,
             'use_value_clipping': use_value_clipping,
             'value_clip_range': value_clip_range,
+        },
+        'reproducibility': {
+            'seed': seed
         }
     }
     
@@ -394,6 +434,8 @@ def main():
                        help='Use dispatch action in environment')
     parser.add_argument('--dispatch-strategy', type=str, default='PROPORTIONAL',
                        help='Dispatch strategy')
+    parser.add_argument('--trained-pcs-model', type=str, default=None,
+                       help='Path to trained PCS model (SAC PCS agent)')
     
     # Logging parameters
     parser.add_argument('--verbose', action='store_true', default=True,
@@ -401,7 +443,23 @@ def main():
     parser.add_argument('--no-tensorboard', action='store_true',
                        help='Disable tensorboard logging')
     
+    # Reproducibility parameters
+    parser.add_argument('--seed', type=int, default=None,
+                       help='Random seed for reproducibility')
+    
     args = parser.parse_args()
+    
+    # Set random seed if provided
+    if args.seed is not None:
+        import random
+        import torch
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(args.seed)
+            torch.cuda.manual_seed_all(args.seed)
+        print(f"Random seed set to: {args.seed}")
     
     # Convert weights to numpy array and normalize
     weights = np.array(args.weights)
@@ -410,7 +468,8 @@ def main():
     # Environment configuration
     env_config = {
         'use_dispatch_action': args.use_dispatch_action,
-        'dispatch_strategy': args.dispatch_strategy
+        'dispatch_strategy': args.dispatch_strategy,
+        'trained_pcs_model': args.trained_pcs_model
     }
     
     # Train the agent
@@ -442,6 +501,7 @@ def main():
         critic_orthogonal_gain=args.critic_orthogonal_gain,
         use_value_clipping=args.use_value_clipping,
         value_clip_range=args.value_clip_range,
+        seed=args.seed,
         experiment_name=args.experiment_name,
         save_dir=args.save_dir,
         verbose=args.verbose,

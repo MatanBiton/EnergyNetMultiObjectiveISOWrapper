@@ -451,6 +451,30 @@ class MultiObjectiveSAC:
             
         return action
     
+    def predict(self, state: np.ndarray, deterministic: bool = False) -> Tuple[float, float]:
+        """Predict action from policy, returning tuple of first 2 action values.
+        
+        This function is similar to select_action but returns a tuple of the first 2 
+        entries of the action, regardless of whether the action has 2 or 3 components.
+        
+        Args:
+            state: The current state observation
+            deterministic: Whether to use deterministic policy (default: False)
+            
+        Returns:
+            Tuple of first 2 action values
+        """
+        action = self.select_action(state, deterministic)
+        # Return tuple of first 2 entries, ensuring we always have at least 2 values
+        if len(action) >= 2:
+            return (float(action[0]), float(action[1]))
+        elif len(action) == 1:
+            # If action only has 1 component, duplicate it
+            return (float(action[0]), float(action[0]))
+        else:
+            # Edge case: empty action array
+            raise ValueError(f"Action array is empty or invalid: {action}")
+    
     def scale_action(self, action: np.ndarray) -> np.ndarray:
         """Scale action from [-1, 1] to environment bounds."""
         low, high = self.action_bounds
@@ -532,11 +556,11 @@ class MultiObjectiveSAC:
         self.training_step += 1
         
         # Log to tensorboard
-        if self.tensorboard_log and self.training_step % 100 == 0:
+        if self.tensorboard_log and self.training_step % 10 == 0:  # More frequent logging (every 10 steps instead of 100)
             self.writer.add_scalar('Loss/Critic', critic_loss, self.training_step)
             self.writer.add_scalar('Loss/Actor', actor_loss, self.training_step)
             self.writer.add_scalar('Loss/Alpha', alpha_loss, self.training_step)
-            self.writer.add_scalar('Alpha', self.get_alpha(), self.training_step)
+            self.writer.add_scalar('Training/Alpha', self.get_alpha(), self.training_step)
             
             # Log learning rates
             if self.use_lr_annealing:
@@ -551,6 +575,9 @@ class MultiObjectiveSAC:
                 for i in range(self.reward_dim):
                     self.writer.add_scalar(f'RewardScaling/Mean_Obj_{i}', self.reward_rms.mean[i], self.training_step)
                     self.writer.add_scalar(f'RewardScaling/Std_Obj_{i}', np.sqrt(self.reward_rms.var[i]), self.training_step)
+            
+            # Flush the writer to ensure data is written to disk
+            self.writer.flush()
         
         return {
             'critic_loss': critic_loss,
@@ -698,7 +725,7 @@ class MultiObjectiveSAC:
     
     def load(self, filepath: str):
         """Load model."""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
         
         self.actor.load_state_dict(checkpoint['actor_state_dict'])
         self.critic1.load_state_dict(checkpoint['critic1_state_dict'])
@@ -745,6 +772,14 @@ class MultiObjectiveSAC:
             print(f"  Value Clipping: {checkpoint.get('use_value_clipping', False)}")
             if checkpoint.get('use_value_clipping', False):
                 print(f"    Clip range: {checkpoint.get('value_clip_range', 200.0)}")
+    
+    def close_logger(self):
+        """Close TensorBoard logger and flush all remaining data."""
+        if hasattr(self, 'writer') and self.writer is not None:
+            self.writer.flush()
+            self.writer.close()
+            if self.verbose:
+                print("TensorBoard logger closed and data flushed")
 
 
 def train_mo_sac(env: gym.Env, 
@@ -771,6 +806,15 @@ def train_mo_sac(env: gym.Env,
     timesteps = 0
     episode = 0
     
+    # EnergyNet episode tracking for aggregated logging
+    episode_info_aggregation = {
+        'predicted_demand': [], 'realized_demand': [], 'pcs_demand': [], 'net_demand': [],
+        'dispatch': [], 'shortfall': [], 'dispatch_cost': [], 'reserve_cost': [], 'pcs_costs': [],
+        'production': [], 'consumption': [], 'buy_price': [], 'sell_price': [], 'iso_buy_price': [],
+        'iso_sell_price': [], 'net_exchange': [], 'pcs_cost': [], 'battery_level': [],
+        'battery_actions': [], 'pcs_actions': []
+    }
+    
     state, _ = env.reset()
     episode_reward = np.zeros(agent.reward_dim)
     episode_length = 0
@@ -785,6 +829,33 @@ def train_mo_sac(env: gym.Env,
         # Step environment
         next_state, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
+        
+        # Log EnergyNet info dict entries
+        if agent.tensorboard_log and info:
+            # Extract and log scalar values
+            scalar_info_keys = [
+                'predicted_demand', 'realized_demand', 'pcs_demand', 'net_demand',
+                'dispatch', 'shortfall', 'dispatch_cost', 'reserve_cost', 'pcs_costs',
+                'production', 'consumption', 'buy_price', 'sell_price', 'iso_buy_price',
+                'iso_sell_price', 'net_exchange', 'pcs_cost'
+            ]
+            
+            for key in scalar_info_keys:
+                if key in info and isinstance(info[key], (int, float)):
+                    agent.writer.add_scalar(f'EnergyNet_Step/{key}', float(info[key]), timesteps)
+                    # Collect for episode aggregation
+                    episode_info_aggregation[key].append(float(info[key]))
+            
+            # Extract and log list values (take the last element for current step)
+            list_info_keys = ['battery_level', 'battery_actions', 'pcs_actions']
+            
+            for key in list_info_keys:
+                if key in info and isinstance(info[key], list) and len(info[key]) > 0:
+                    # Log the last element of the list (current step value)
+                    current_value = float(info[key][-1])
+                    agent.writer.add_scalar(f'EnergyNet_Step/{key}', current_value, timesteps)
+                    # Collect for episode aggregation
+                    episode_info_aggregation[key].append(current_value)
         
         # Store transition
         agent.store_transition(state, action, reward, next_state, done)
@@ -833,12 +904,30 @@ def train_mo_sac(env: gym.Env,
                 agent.writer.add_scalar('Episode/Length', episode_length, episode)
                 agent.writer.add_scalar('Episode/Scalarized_Reward', 
                                       np.sum(episode_reward * agent.weights), episode)
+                
+                # Log aggregated EnergyNet episode statistics
+                for key, values in episode_info_aggregation.items():
+                    if values:  # Only log if we have data
+                        values_array = np.array(values)
+                        agent.writer.add_scalar(f'EnergyNet_Episode/{key}_mean', np.mean(values_array), episode)
+                        agent.writer.add_scalar(f'EnergyNet_Episode/{key}_std', np.std(values_array), episode)
+                        agent.writer.add_scalar(f'EnergyNet_Episode/{key}_sum', np.sum(values_array), episode)
+                        agent.writer.add_scalar(f'EnergyNet_Episode/{key}_min', np.min(values_array), episode)
+                        agent.writer.add_scalar(f'EnergyNet_Episode/{key}_max', np.max(values_array), episode)
+                        agent.writer.add_scalar(f'EnergyNet_Episode/{key}_final', values_array[-1], episode)
+                
+                # Flush episode data to ensure it's written
+                agent.writer.flush()
             
             state, _ = env.reset()
             episode_reward = np.zeros(agent.reward_dim)
             episode_length = 0
             episode += 1
             agent.episode_count = episode
+            
+            # Reset episode info aggregation for next episode
+            for key in episode_info_aggregation:
+                episode_info_aggregation[key] = []
         
         # Evaluation
         if timesteps % eval_freq == 0 and timesteps >= learning_starts:
@@ -852,6 +941,9 @@ def train_mo_sac(env: gym.Env,
         if timesteps % save_freq == 0 and timesteps >= learning_starts:
             agent.save(f"{save_path}_{timesteps}.pth")
     
+    # Close logger to ensure all data is flushed
+    agent.close_logger()
+    
     return {
         'episode_rewards': episode_rewards,
         'episode_lengths': episode_lengths
@@ -861,7 +953,8 @@ def train_mo_sac(env: gym.Env,
 def evaluate_mo_sac(env: gym.Env, 
                     agent: MultiObjectiveSAC, 
                     num_episodes: int = 10,
-                    verbose: bool = False) -> np.ndarray:
+                    verbose: bool = False,
+                    log_energynet_info: bool = True) -> np.ndarray:
     """Evaluate Multi-Objective SAC agent."""
     
     episode_rewards = []
@@ -869,16 +962,59 @@ def evaluate_mo_sac(env: gym.Env,
     for episode in range(num_episodes):
         state, _ = env.reset()
         episode_reward = np.zeros(agent.reward_dim)
+        step_count = 0
+        
+        # EnergyNet episode tracking for evaluation logging
+        if log_energynet_info and agent.tensorboard_log:
+            eval_info_aggregation = {
+                'predicted_demand': [], 'realized_demand': [], 'pcs_demand': [], 'net_demand': [],
+                'dispatch': [], 'shortfall': [], 'dispatch_cost': [], 'reserve_cost': [], 'pcs_costs': [],
+                'production': [], 'consumption': [], 'buy_price': [], 'sell_price': [], 'iso_buy_price': [],
+                'iso_sell_price': [], 'net_exchange': [], 'pcs_cost': [], 'battery_level': [],
+                'battery_actions': [], 'pcs_actions': []
+            }
         
         while True:
             action = agent.select_action(state, deterministic=True)
-            state, reward, terminated, truncated, _ = env.step(action)
+            state, reward, terminated, truncated, info = env.step(action)
             episode_reward += reward
+            step_count += 1
+            
+            # Log EnergyNet info during evaluation
+            if log_energynet_info and agent.tensorboard_log and info:
+                # Extract scalar values
+                scalar_info_keys = [
+                    'predicted_demand', 'realized_demand', 'pcs_demand', 'net_demand',
+                    'dispatch', 'shortfall', 'dispatch_cost', 'reserve_cost', 'pcs_costs',
+                    'production', 'consumption', 'buy_price', 'sell_price', 'iso_buy_price',
+                    'iso_sell_price', 'net_exchange', 'pcs_cost'
+                ]
+                
+                for key in scalar_info_keys:
+                    if key in info and isinstance(info[key], (int, float)):
+                        eval_info_aggregation[key].append(float(info[key]))
+                
+                # Extract list values (take the last element for current step)
+                list_info_keys = ['battery_level', 'battery_actions', 'pcs_actions']
+                
+                for key in list_info_keys:
+                    if key in info and isinstance(info[key], list) and len(info[key]) > 0:
+                        eval_info_aggregation[key].append(float(info[key][-1]))
             
             if terminated or truncated:
                 break
         
         episode_rewards.append(episode_reward)
+        
+        # Log evaluation episode statistics
+        if log_energynet_info and agent.tensorboard_log:
+            eval_episode_num = agent.episode_count + episode  # Use global episode count + eval episode
+            for key, values in eval_info_aggregation.items():
+                if values:  # Only log if we have data
+                    values_array = np.array(values)
+                    agent.writer.add_scalar(f'EnergyNet_Eval/{key}_mean', np.mean(values_array), eval_episode_num)
+                    agent.writer.add_scalar(f'EnergyNet_Eval/{key}_sum', np.sum(values_array), eval_episode_num)
+                    agent.writer.add_scalar(f'EnergyNet_Eval/{key}_final', values_array[-1], eval_episode_num)
         
         if verbose:
             print(f"Eval Episode {episode + 1}: Reward {episode_reward}")

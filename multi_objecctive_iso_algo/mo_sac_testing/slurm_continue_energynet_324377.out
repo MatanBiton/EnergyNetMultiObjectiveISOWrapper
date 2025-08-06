@@ -1,0 +1,688 @@
+==========================================
+Multi-Objective SAC EnergyNet Continue Training (SLURM)
+==========================================
+Job ID: 324377
+Job Name: mo_sac_continue_energynet
+Node: lambda1
+CPUs: 4
+GPUs: 0
+Memory: 32768 MB
+==========================================
+Original directory (where files are): /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing
+Model path: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Loading CUDA modules...
+No CUDA modules loaded
+✓ Set CUDA environment variables
+Activating conda environment...
+✓ Activated conda environment: IsoMOEnergyNet
+Found Python: python3 (/home/matan.biton/miniconda3/envs/IsoMOEnergyNet/bin/python3)
+Python version: Python 3.10.9
+Python location: /home/matan.biton/miniconda3/envs/IsoMOEnergyNet/bin/python3
+
+Checking CUDA availability...
+CUDA_HOME: /usr/local/cuda
+CUDA_PATH: /usr/local/cuda
+GPU Status:
+0, NVIDIA GeForce GTX 1080 Ti, 11264, 2
+Checking PyTorch CUDA support...
+PyTorch version: 2.7.0+cu126
+PyTorch CUDA available: True
+✓ PyTorch CUDA support is working
+
+Creating working directory: /tmp/energynet_continue_training_matan.biton_3626613
+Copying files to working directory...
+Copied multi_objective_sac.py from parent directory
+Copied EnergyNetMoISO directory from /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/../../EnergyNetMoISO
+Changed to working directory: /tmp/energynet_continue_training_matan.biton_3626613
+Files in working directory:
+total 18864
+drwxr-xr-x 7 matan.biton domain^users     4096 Aug  5 22:44 .
+drwxrwxrwt 1 root        root         19025920 Aug  5 22:44 ..
+-rwxr-xr-x 1 matan.biton domain^users    11270 Aug  5 22:44 average_tensorboard_logs.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:44 checkpoints
+-rw-r--r-- 1 matan.biton domain^users    21796 Aug  5 22:44 continue_train_energynet.py
+drwxr-xr-x 4 matan.biton domain^users     4096 Aug  5 22:44 EnergyNetMoISO
+-rw-r--r-- 1 matan.biton domain^users     9719 Aug  5 22:44 examples.py
+-rw-r--r-- 1 matan.biton domain^users       37 Aug  5 22:44 __init__.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:44 logs
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:44 models
+-rw-r--r-- 1 matan.biton domain^users    46082 Aug  5 22:44 multi_objective_sac.py
+-rw-r--r-- 1 matan.biton domain^users    10101 Aug  5 22:44 optimization_examples.py
+drwxr-xr-x 2 matan.biton domain^users     4096 Aug  5 22:44 plots
+-rw-r--r-- 1 matan.biton domain^users     4016 Aug  5 22:44 quick_test.py
+-rw-r--r-- 1 matan.biton domain^users      503 Aug  5 22:44 requirements.txt
+-rwxr-xr-x 1 matan.biton domain^users        0 Aug  5 22:44 test_averaging.py
+-rw-r--r-- 1 matan.biton domain^users    17868 Aug  5 22:44 test_environments.py
+-rw-r--r-- 1 matan.biton domain^users     2970 Aug  5 22:44 test_gpu_availability.py
+-rwxr-xr-x 1 matan.biton domain^users     6012 Aug  5 22:44 test_gpu_quick.py
+-rw-r--r-- 1 matan.biton domain^users     4458 Aug  5 22:44 test_imports.py
+-rw-r--r-- 1 matan.biton domain^users    14966 Aug  5 22:44 test_mo_sac.py
+-rw-r--r-- 1 matan.biton domain^users    12212 Aug  5 22:44 test_mo_sac_quick.py
+-rw-r--r-- 1 matan.biton domain^users    12772 Aug  5 22:44 test_optimizations.py
+-rw-r--r-- 1 matan.biton domain^users     5076 Aug  5 22:44 test_pcs_loading.py
+-rw-r--r-- 1 matan.biton domain^users    20689 Aug  5 22:44 train_energynet.py
+
+Testing Python imports...
+Python path will include:
+  - Current directory: /tmp/energynet_continue_training_matan.biton_3626613
+  - Parent directories will be added by the script
+Testing basic dependencies...
+✓ Basic dependencies (torch, numpy, gymnasium, matplotlib) available
+Testing multi_objective_sac import...
+✓ multi_objective_sac import successful
+Testing EnergyNetMoISO import...
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+✓ EnergyNetMoISO import successful
+
+Running under SLURM job manager
+Set OMP_NUM_THREADS to 4
+GPU devices: 0
+✓ GPU training enabled
+Continue Training Parameters:
+  Model Path: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+  Additional Timesteps: 20000
+  Experiment Name: testing
+  Random Seed: Not specified (will use random)
+
+Environment Configuration:
+  Use Dispatch Action: false
+  Dispatch Strategy: PROPORTIONAL
+  Trained PCS Model: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth
+  ✓ PCS model file found
+
+Optimization Parameter Overrides:
+  LR Annealing: false
+  Reward Scaling: false
+  Value Clipping: false
+
+Running EnergyNet continue training...
+Command: python3 continue_train_energynet.py --model-path /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth --total-timesteps 20000 --save-dir . --experiment-name continue_train_energynet_testing --eval-freq 5000 --save-freq 10000 --verbose --dispatch-strategy PROPORTIONAL --trained-pcs-model /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth
+
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+================================================================================
+Continuing MO-SAC Training on EnergyNet MoISO Environment
+Loading from: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Experiment: continue_train_energynet_testing
+================================================================================
+Loading PCS model from: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth
+✓ Successfully loaded PCS model
+Test prediction successful: (tensor([9.9775]), None)
+Model loaded successfully, testing prediction...
+Test prediction successful: (tensor([9.9775]), None)
+Agent 0 fully initialized
+Agent 0 fully initialized
+Agent 0 loading status: Failed
+Environment Configuration:
+  State dimension: 3
+  Action dimension: 2
+  Reward dimension: 2
+  Action bounds: (1.0, 10.0)
+  Environment config: {'use_dispatch_action': False, 'dispatch_strategy': 'PROPORTIONAL', 'trained_pcs_model': '/home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training/pcs_experiments/models/with_opt_iso_opt_no_disp_final.pth'}
+\nLoading existing model configuration...
+  Loaded weights: [0.6 0.4]
+  Training step: 290001
+  Episode count: 6298
+Using device: cuda
+GPU: NVIDIA GeForce GTX 1080 Ti
+GPU Memory: 10.9 GB
+CUDA Version: 12.6
+Optimization features enabled:
+  LR Annealing: False
+  Reward Scaling: False
+  Orthogonal Init: False
+  Value Clipping: False
+\nLoading trained model state...
+Model loaded from /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Loaded optimization settings:
+  LR Annealing: True
+  Reward Scaling: True
+  Orthogonal Init: True
+  Value Clipping: True
+    Clip range: 200.0
+\nAgent Configuration (after loading):
+  Actor LR: 0.0003
+  Critic LR: 0.0003
+  Alpha LR: 0.0003
+  Gamma: 0.99
+  Tau: 0.005
+  Buffer capacity: 1000000
+  Batch size: 256
+\nOptimization Features:
+  LR Annealing: False
+  Reward Scaling: False
+  Value Clipping: False
+  Tensorboard log: ./logs/continue_train_energynet_testing_1754423117
+\nEvaluating current model performance...
+  Current performance (10 episodes):
+    Cost reward: -727707.157 ± 3526.888
+    Stability reward: -38.536 ± 17.634
+    Scalarized: -436639.709
+\n============================================================
+Continuing Training...
+============================================================
+Episode 1: Reward [-7.29647347e+05 -4.82367343e+01], Scalarized: -437807.703, Length 48
+Episode 2: Reward [-7.30889621e+05 -5.44481032e+01], Scalarized: -438555.552, Length 48
+Episode 3: Reward [-7.24039750e+05 -2.01987521e+01], Scalarized: -434431.930, Length 48
+Episode 4: Reward [-7.34046066e+05 -7.02303284e+01], Scalarized: -440455.732, Length 48
+Episode 5: Reward [-7.27167007e+05 -3.58350351e+01], Scalarized: -436314.538, Length 48
+Episode 6: Reward [-7.27057788e+05 -3.52889423e+01], Scalarized: -436248.789, Length 48
+Episode 7: Reward [-7.28641651e+05 -4.32082533e+01], Scalarized: -437202.274, Length 48
+Episode 8: Reward [-7.34115363e+05 -7.05768158e+01], Scalarized: -440497.449, Length 48
+Episode 9: Reward [-7.35691909e+05 -7.84595465e+01], Scalarized: -441446.529, Length 48
+Episode 10: Reward [-7.33062074e+05 -6.53103686e+01], Scalarized: -439863.368, Length 48
+Episode 11: Reward [-7.29012449e+05 -4.50622428e+01], Scalarized: -437425.494, Length 48
+Episode 12: Reward [-7.25650867e+05 -2.82543332e+01], Scalarized: -435401.822, Length 48
+Episode 13: Reward [-7.24547955e+05 -2.27397741e+01], Scalarized: -434737.869, Length 48
+Episode 14: Reward [-7.24096991e+05 -2.04849553e+01], Scalarized: -434466.389, Length 48
+Episode 15: Reward [-7.31862012e+05 -5.93100586e+01], Scalarized: -439140.931, Length 48
+Episode 16: Reward [-7.26798062e+05 -3.39903114e+01], Scalarized: -436092.433, Length 48
+Episode 17: Reward [-7.34327173e+05 -7.16358641e+01], Scalarized: -440624.958, Length 48
+Episode 18: Reward [-7.26496972e+05 -3.24848614e+01], Scalarized: -435911.177, Length 48
+Episode 19: Reward [-7.29141691e+05 -4.57084533e+01], Scalarized: -437503.298, Length 48
+Episode 20: Reward [-7.24532526e+05 -2.26626292e+01], Scalarized: -434728.581, Length 48
+Episode 21: Reward [-7.29260825e+05 -4.63041272e+01], Scalarized: -437575.017, Length 48
+Episode 22: Reward [-7.35272493e+05 -7.63624649e+01], Scalarized: -441194.041, Length 48
+Episode 23: Reward [-7.26727394e+05 -3.36369715e+01], Scalarized: -436049.891, Length 48
+Episode 24: Reward [-7.27690366e+05 -3.84518314e+01], Scalarized: -436629.601, Length 48
+Episode 25: Reward [-7.27489299e+05 -3.74464941e+01], Scalarized: -436508.558, Length 48
+Episode 26: Reward [-7.27541508e+05 -3.77075414e+01], Scalarized: -436539.988, Length 48
+Episode 27: Reward [-7.26515742e+05 -3.25787086e+01], Scalarized: -435922.477, Length 48
+Episode 28: Reward [-7.34504495e+05 -7.25224749e+01], Scalarized: -440731.706, Length 48
+Episode 29: Reward [-7.28647160e+05 -4.32358018e+01], Scalarized: -437205.591, Length 48
+Episode 30: Reward [-7.33740289e+05 -6.87014445e+01], Scalarized: -440271.654, Length 48
+Episode 31: Reward [-7.30059040e+05 -5.02952003e+01], Scalarized: -438055.542, Length 48
+Episode 32: Reward [-7.31128149e+05 -5.56407435e+01], Scalarized: -438699.146, Length 48
+Episode 33: Reward [-7.29232303e+05 -4.61615135e+01], Scalarized: -437557.846, Length 48
+Episode 34: Reward [-7.29344865e+05 -4.67243228e+01], Scalarized: -437625.608, Length 48
+Episode 35: Reward [-7.28487599e+05 -4.24379968e+01], Scalarized: -437109.535, Length 48
+Episode 36: Reward [-7.31847076e+05 -5.92353796e+01], Scalarized: -439131.940, Length 48
+Episode 37: Reward [-7.27472431e+05 -3.73621525e+01], Scalarized: -436498.403, Length 48
+Episode 38: Reward [-7.31815067e+05 -5.90753351e+01], Scalarized: -439112.670, Length 48
+Episode 39: Reward [-7.29998588e+05 -4.99929394e+01], Scalarized: -438019.150, Length 48
+Episode 40: Reward [-7.23320781e+05 -1.66039073e+01], Scalarized: -433999.110, Length 48
+Episode 41: Reward [-7.27119202e+05 -3.55960081e+01], Scalarized: -436285.759, Length 48
+Episode 42: Reward [-7.30794264e+05 -5.39713186e+01], Scalarized: -438498.147, Length 48
+Episode 43: Reward [-7.28379705e+05 -4.18985237e+01], Scalarized: -437044.582, Length 48
+Episode 44: Reward [-7.28079192e+05 -4.03959592e+01], Scalarized: -436863.673, Length 48
+Episode 45: Reward [-7.35809156e+05 -7.90457819e+01], Scalarized: -441517.112, Length 48
+Episode 46: Reward [-7.27574230e+05 -3.78711506e+01], Scalarized: -436559.687, Length 48
+Episode 47: Reward [-7.26563164e+05 -3.28158208e+01], Scalarized: -435951.025, Length 48
+Episode 48: Reward [-7.30074908e+05 -5.03745395e+01], Scalarized: -438065.095, Length 48
+Episode 49: Reward [-7.23922222e+05 -1.96111109e+01], Scalarized: -434361.178, Length 48
+Episode 50: Reward [-7.27301037e+05 -3.65051868e+01], Scalarized: -436395.224, Length 48
+Episode 51: Reward [-7.27713612e+05 -3.85680616e+01], Scalarized: -436643.595, Length 48
+Episode 52: Reward [-7.26643480e+05 -3.32174005e+01], Scalarized: -435999.375, Length 48
+Episode 53: Reward [-7.25721772e+05 -2.86088579e+01], Scalarized: -435444.506, Length 48
+Episode 54: Reward [-7.30154214e+05 -5.07710700e+01], Scalarized: -438112.837, Length 48
+Episode 55: Reward [-7.21175861e+05 -5.87930659e+00], Scalarized: -432707.869, Length 48
+Episode 56: Reward [-7.22989032e+05 -1.49451603e+01], Scalarized: -433799.397, Length 48
+Episode 57: Reward [-7.25962211e+05 -2.98110551e+01], Scalarized: -435589.251, Length 48
+Episode 58: Reward [-7.27266563e+05 -3.63328162e+01], Scalarized: -436374.471, Length 48
+Episode 59: Reward [-7.32273823e+05 -6.13691173e+01], Scalarized: -439388.842, Length 48
+Episode 60: Reward [-7.32411385e+05 -6.20569261e+01], Scalarized: -439471.654, Length 48
+Episode 61: Reward [-7.30710868e+05 -5.35543413e+01], Scalarized: -438447.943, Length 48
+Episode 62: Reward [-7.30252893e+05 -5.12644644e+01], Scalarized: -438172.242, Length 48
+Episode 63: Reward [-7.23198074e+05 -1.59903723e+01], Scalarized: -433925.241, Length 48
+Episode 64: Reward [-7.29157288e+05 -4.57864377e+01], Scalarized: -437512.687, Length 48
+Episode 65: Reward [-7.25453770e+05 -2.72688507e+01], Scalarized: -435283.170, Length 48
+Episode 66: Reward [-7.26491656e+05 -3.24582811e+01], Scalarized: -435907.977, Length 48
+Episode 67: Reward [-7.23040383e+05 -1.52019144e+01], Scalarized: -433830.310, Length 48
+Episode 68: Reward [-7.27894667e+05 -3.94733337e+01], Scalarized: -436752.589, Length 48
+Episode 69: Reward [-7.24477015e+05 -2.23850758e+01], Scalarized: -434695.163, Length 48
+Episode 70: Reward [-7.34645610e+05 -7.32280483e+01], Scalarized: -440816.657, Length 48
+Episode 71: Reward [-7.24439341e+05 -2.21967072e+01], Scalarized: -434672.484, Length 48
+Episode 72: Reward [-7.26116646e+05 -3.05832320e+01], Scalarized: -435682.221, Length 48
+Episode 73: Reward [-7.22490289e+05 -1.24514453e+01], Scalarized: -433499.154, Length 48
+Episode 74: Reward [-7.29063667e+05 -4.53183355e+01], Scalarized: -437456.328, Length 48
+Episode 75: Reward [-7.29073314e+05 -4.53665716e+01], Scalarized: -437462.135, Length 48
+Episode 76: Reward [-7.23917565e+05 -1.95878265e+01], Scalarized: -434358.374, Length 48
+Episode 77: Reward [-7.22968635e+05 -1.48431748e+01], Scalarized: -433787.118, Length 48
+Episode 78: Reward [-7.33323533e+05 -6.66176636e+01], Scalarized: -440020.767, Length 48
+Episode 79: Reward [-7.30603302e+05 -5.30165121e+01], Scalarized: -438383.188, Length 48
+Episode 80: Reward [-7.24256533e+05 -2.12826661e+01], Scalarized: -434562.433, Length 48
+Episode 81: Reward [-7.23155281e+05 -1.57764048e+01], Scalarized: -433899.479, Length 48
+Episode 82: Reward [-7.35089672e+05 -7.54483602e+01], Scalarized: -441083.983, Length 48
+Episode 83: Reward [-7.30976639e+05 -5.48831928e+01], Scalarized: -438607.936, Length 48
+Episode 84: Reward [-7.24282283e+05 -2.14114132e+01], Scalarized: -434577.934, Length 48
+Episode 85: Reward [-7.31165289e+05 -5.58264463e+01], Scalarized: -438721.504, Length 48
+Episode 86: Reward [-7.25513679e+05 -2.75683933e+01], Scalarized: -435319.235, Length 48
+Episode 87: Reward [-7.21731451e+05 -8.65725610e+00], Scalarized: -433042.334, Length 48
+Episode 88: Reward [-7.29900020e+05 -4.95000995e+01], Scalarized: -437959.812, Length 48
+Episode 89: Reward [-7.34370280e+05 -7.18514007e+01], Scalarized: -440650.909, Length 48
+Episode 90: Reward [-7.26867833e+05 -3.43391630e+01], Scalarized: -436134.435, Length 48
+Episode 91: Reward [-7.25630495e+05 -2.81524762e+01], Scalarized: -435389.558, Length 48
+Episode 92: Reward [-7.26199195e+05 -3.09959773e+01], Scalarized: -435731.916, Length 48
+Episode 93: Reward [-7.27439801e+05 -3.71990057e+01], Scalarized: -436478.760, Length 48
+Episode 94: Reward [-7.22918142e+05 -1.45907088e+01], Scalarized: -433756.721, Length 48
+Episode 95: Reward [-7.28591947e+05 -4.29597374e+01], Scalarized: -437172.352, Length 48
+Episode 96: Reward [-7.26700602e+05 -3.35030098e+01], Scalarized: -436033.762, Length 48
+Episode 97: Reward [-7.22518444e+05 -1.25922205e+01], Scalarized: -433516.103, Length 48
+Episode 98: Reward [-7.32228840e+05 -6.11441991e+01], Scalarized: -439361.762, Length 48
+Episode 99: Reward [-7.31971174e+05 -5.98558676e+01], Scalarized: -439206.646, Length 48
+Episode 100: Reward [-7.30447559e+05 -5.22377938e+01], Scalarized: -438289.430, Length 48
+Episode 101: Reward [-7.27205719e+05 -3.60285970e+01], Scalarized: -436337.843, Length 48
+Episode 102: Reward [-7.35673585e+05 -7.83679272e+01], Scalarized: -441435.498, Length 48
+Episode 103: Reward [-7.32018638e+05 -6.00931884e+01], Scalarized: -439235.220, Length 48
+Episode 104: Reward [-7.28803161e+05 -4.40158075e+01], Scalarized: -437299.503, Length 48
+Episode 105: Reward [-7.25287914e+05 -2.64395684e+01], Scalarized: -435183.324, Length 48
+Episode 106: Reward [-7.31852196e+05 -5.92609803e+01], Scalarized: -439135.022, Length 48
+Episode 107: Reward [-7.32243595e+05 -6.12179770e+01], Scalarized: -439370.644, Length 48
+Episode 108: Reward [-7.25244144e+05 -2.62207218e+01], Scalarized: -435156.975, Length 48
+Episode 109: Reward [-7.29419725e+05 -4.70986259e+01], Scalarized: -437670.675, Length 48
+Episode 110: Reward [-7.32079244e+05 -6.03962219e+01], Scalarized: -439271.705, Length 48
+Episode 111: Reward [-7.26560295e+05 -3.28014741e+01], Scalarized: -435949.297, Length 48
+Episode 112: Reward [-7.24677669e+05 -2.33883441e+01], Scalarized: -434815.957, Length 48
+Episode 113: Reward [-7.28651372e+05 -4.32568592e+01], Scalarized: -437208.126, Length 48
+Episode 114: Reward [-7.23637808e+05 -1.81890392e+01], Scalarized: -434189.960, Length 48
+Episode 115: Reward [-7.33757446e+05 -6.87872320e+01], Scalarized: -440281.983, Length 48
+Episode 116: Reward [-7.32872340e+05 -6.43617019e+01], Scalarized: -439749.149, Length 48
+Episode 117: Reward [-7.29978562e+05 -4.98928118e+01], Scalarized: -438007.095, Length 48
+Episode 118: Reward [-7.25829177e+05 -2.91458865e+01], Scalarized: -435509.165, Length 48
+Episode 119: Reward [-7.24113072e+05 -2.05653612e+01], Scalarized: -434476.069, Length 48
+Episode 120: Reward [-7.31077397e+05 -5.53869828e+01], Scalarized: -438668.593, Length 48
+Episode 121: Reward [-7.23725873e+05 -1.86293654e+01], Scalarized: -434242.976, Length 48
+Episode 122: Reward [-7.23634543e+05 -1.81727143e+01], Scalarized: -434187.995, Length 48
+Episode 123: Reward [-7.32497957e+05 -6.24897861e+01], Scalarized: -439523.770, Length 48
+Episode 124: Reward [-7.37401176e+05 -8.70058813e+01], Scalarized: -442475.508, Length 48
+Episode 125: Reward [-7.28192625e+05 -4.09631271e+01], Scalarized: -436931.961, Length 48
+Episode 126: Reward [-7.24733949e+05 -2.36697440e+01], Scalarized: -434849.837, Length 48
+Episode 127: Reward [-7.29892130e+05 -4.94606522e+01], Scalarized: -437955.063, Length 48
+Episode 128: Reward [-7.30387882e+05 -5.19394121e+01], Scalarized: -438253.505, Length 48
+Episode 129: Reward [-7.29471045e+05 -4.73552271e+01], Scalarized: -437701.569, Length 48
+Episode 130: Reward [-7.25718460e+05 -2.85922986e+01], Scalarized: -435442.513, Length 48
+Episode 131: Reward [-7.27782313e+05 -3.89115651e+01], Scalarized: -436684.952, Length 48
+Episode 132: Reward [-7.23572942e+05 -1.78647085e+01], Scalarized: -434150.911, Length 48
+Episode 133: Reward [-7.27000270e+05 -3.50013476e+01], Scalarized: -436214.162, Length 48
+Episode 134: Reward [-7.31733972e+05 -5.86698612e+01], Scalarized: -439063.851, Length 48
+Episode 135: Reward [-7.31483624e+05 -5.74181194e+01], Scalarized: -438913.142, Length 48
+Episode 136: Reward [-7.22858307e+05 -1.42915335e+01], Scalarized: -433720.701, Length 48
+Episode 137: Reward [-7.26593328e+05 -3.29666384e+01], Scalarized: -435969.183, Length 48
+Episode 138: Reward [-7.27402971e+05 -3.70148539e+01], Scalarized: -436456.588, Length 48
+Episode 139: Reward [-7.22284750e+05 -1.14237475e+01], Scalarized: -433375.419, Length 48
+Episode 140: Reward [-7.33558077e+05 -6.77903862e+01], Scalarized: -440161.962, Length 48
+Episode 141: Reward [-7.42090070e+05 -1.10450351e+02], Scalarized: -445298.222, Length 48
+Episode 142: Reward [-7.26498185e+05 -3.24909256e+01], Scalarized: -435911.907, Length 48
+Episode 143: Reward [-7.34077447e+05 -7.03872349e+01], Scalarized: -440474.623, Length 48
+Episode 144: Reward [-7.21127682e+05 -5.63840866e+00], Scalarized: -432678.864, Length 48
+Episode 145: Reward [-7.24110698e+05 -2.05534914e+01], Scalarized: -434474.640, Length 48
+Episode 146: Reward [-7.30868246e+05 -5.43412305e+01], Scalarized: -438542.684, Length 48
+Episode 147: Reward [-7.31522946e+05 -5.76147284e+01], Scalarized: -438936.813, Length 48
+Episode 148: Reward [-7.26690599e+05 -3.34529959e+01], Scalarized: -436027.741, Length 48
+Episode 149: Reward [-7.27794280e+05 -3.89713983e+01], Scalarized: -436692.156, Length 48
+Episode 150: Reward [-7.31352706e+05 -5.67635313e+01], Scalarized: -438834.329, Length 48
+Episode 151: Reward [-7.27376682e+05 -3.68834112e+01], Scalarized: -436440.763, Length 48
+Episode 152: Reward [-7.29098100e+05 -4.54905012e+01], Scalarized: -437477.056, Length 48
+Episode 153: Reward [-7.25776351e+05 -2.88817570e+01], Scalarized: -435477.364, Length 48
+Episode 154: Reward [-7.24734089e+05 -2.36704460e+01], Scalarized: -434849.922, Length 48
+Episode 155: Reward [-7.31977304e+05 -5.98865209e+01], Scalarized: -439210.337, Length 48
+Episode 156: Reward [-7.26333074e+05 -3.16653688e+01], Scalarized: -435812.510, Length 48
+Episode 157: Reward [-7.26553259e+05 -3.27662971e+01], Scalarized: -435945.062, Length 48
+Episode 158: Reward [-7.28443661e+05 -4.22183049e+01], Scalarized: -437083.084, Length 48
+Episode 159: Reward [-7.27699026e+05 -3.84951306e+01], Scalarized: -436634.814, Length 48
+Episode 160: Reward [-7.34024474e+05 -7.01223703e+01], Scalarized: -440442.733, Length 48
+Episode 161: Reward [-7.25873231e+05 -2.93661568e+01], Scalarized: -435535.685, Length 48
+Episode 162: Reward [-7.22295202e+05 -1.14760085e+01], Scalarized: -433381.711, Length 48
+Episode 163: Reward [-7.31937031e+05 -5.96851530e+01], Scalarized: -439186.092, Length 48
+Episode 164: Reward [-7.29193370e+05 -4.59668521e+01], Scalarized: -437534.409, Length 48
+Episode 165: Reward [-7.27743662e+05 -3.87183089e+01], Scalarized: -436661.684, Length 48
+Episode 166: Reward [-7.24160023e+05 -2.08001157e+01], Scalarized: -434504.334, Length 48
+Episode 167: Reward [-7.32606962e+05 -6.30348083e+01], Scalarized: -439589.391, Length 48
+Episode 168: Reward [-7.25844379e+05 -2.92218934e+01], Scalarized: -435518.316, Length 48
+Episode 169: Reward [-7.30513239e+05 -5.25661932e+01], Scalarized: -438328.970, Length 48
+Episode 170: Reward [-7.34769289e+05 -7.38464431e+01], Scalarized: -440891.112, Length 48
+Episode 171: Reward [-7.24860814e+05 -2.43040717e+01], Scalarized: -434926.210, Length 48
+Episode 172: Reward [-7.24336528e+05 -2.16826398e+01], Scalarized: -434610.590, Length 48
+Episode 173: Reward [-7.34474847e+05 -7.23742337e+01], Scalarized: -440713.858, Length 48
+Episode 174: Reward [-7.34578501e+05 -7.28925050e+01], Scalarized: -440776.258, Length 48
+Episode 175: Reward [-7.29888305e+05 -4.94415255e+01], Scalarized: -437952.760, Length 48
+Episode 176: Reward [-7.32537784e+05 -6.26889188e+01], Scalarized: -439547.746, Length 48
+Episode 177: Reward [-7.31297920e+05 -5.64896021e+01], Scalarized: -438801.348, Length 48
+Episode 178: Reward [-7.26968657e+05 -3.48432839e+01], Scalarized: -436195.131, Length 48
+Episode 179: Reward [-7.29825224e+05 -4.91261185e+01], Scalarized: -437914.785, Length 48
+Episode 180: Reward [-7.30429488e+05 -5.21474392e+01], Scalarized: -438278.552, Length 48
+Episode 181: Reward [-7.42270171e+05 -1.11350856e+02], Scalarized: -445406.643, Length 48
+Episode 182: Reward [-7.25250796e+05 -2.62539812e+01], Scalarized: -435160.979, Length 48
+Episode 183: Reward [-7.32241749e+05 -6.12087469e+01], Scalarized: -439369.533, Length 48
+Episode 184: Reward [-7.30981375e+05 -5.49068761e+01], Scalarized: -438610.788, Length 48
+Episode 185: Reward [-7.28968269e+05 -4.48413425e+01], Scalarized: -437398.898, Length 48
+Episode 186: Reward [-7.25126917e+05 -2.56345867e+01], Scalarized: -435086.404, Length 48
+Episode 187: Reward [-7.25823359e+05 -2.91167972e+01], Scalarized: -435505.662, Length 48
+Episode 188: Reward [-7.27184553e+05 -3.59227636e+01], Scalarized: -436325.101, Length 48
+Episode 189: Reward [-7.28166686e+05 -4.08334303e+01], Scalarized: -436916.345, Length 48
+Episode 190: Reward [-7.34101884e+05 -7.05094212e+01], Scalarized: -440489.334, Length 48
+Episode 191: Reward [-7.25719416e+05 -2.85970803e+01], Scalarized: -435443.088, Length 48
+Episode 192: Reward [-7.27062299e+05 -3.53114957e+01], Scalarized: -436251.504, Length 48
+Episode 193: Reward [-7.30734714e+05 -5.36735683e+01], Scalarized: -438462.298, Length 48
+Episode 194: Reward [-7.32596136e+05 -6.29806786e+01], Scalarized: -439582.874, Length 48
+Episode 195: Reward [-7.37242215e+05 -8.62110757e+01], Scalarized: -442379.814, Length 48
+Episode 196: Reward [-7.30460667e+05 -5.23033346e+01], Scalarized: -438297.321, Length 48
+Episode 197: Reward [-7.27418512e+05 -3.70925618e+01], Scalarized: -436465.944, Length 48
+Episode 198: Reward [-7.25407525e+05 -2.70376226e+01], Scalarized: -435255.330, Length 48
+Episode 199: Reward [-7.24025920e+05 -2.01295978e+01], Scalarized: -434423.604, Length 48
+Episode 200: Reward [-7.27275199e+05 -3.63759970e+01], Scalarized: -436379.670, Length 48
+Episode 201: Reward [-7.23482651e+05 -1.74132554e+01], Scalarized: -434096.556, Length 48
+Episode 202: Reward [-7.31689171e+05 -5.84458551e+01], Scalarized: -439036.881, Length 48
+Episode 203: Reward [-7.35753113e+05 -7.87655643e+01], Scalarized: -441483.374, Length 48
+Episode 204: Reward [-7.23788916e+05 -1.89445778e+01], Scalarized: -434280.927, Length 48
+Episode 205: Reward [-7.23931469e+05 -1.96573468e+01], Scalarized: -434366.745, Length 48
+Episode 206: Reward [-7.28923770e+05 -4.46188493e+01], Scalarized: -437372.109, Length 48
+Episode 207: Reward [-7.33618520e+05 -6.80925985e+01], Scalarized: -440198.349, Length 48
+Episode 208: Reward [-7.29962629e+05 -4.98131428e+01], Scalarized: -437997.502, Length 48
+Step 10000: {'critic_loss': 83460072.0, 'actor_loss': -0.06012042984366417, 'alpha_loss': 0.6275208592414856, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Eval Episode 1: Reward [-7.26955892e+05 -3.47794609e+01]
+Eval Episode 2: Reward [-7.32701144e+05 -6.35057201e+01]
+Eval Episode 3: Reward [-7.27757274e+05 -3.87863708e+01]
+Eval Episode 4: Reward [-7.25948582e+05 -2.97429080e+01]
+Eval Episode 5: Reward [-7.32430236e+05 -6.21511787e+01]
+Eval Episode 6: Reward [-7.30906096e+05 -5.45304819e+01]
+Eval Episode 7: Reward [-7.29191156e+05 -4.59557779e+01]
+Eval Episode 8: Reward [-7.27446499e+05 -3.72324929e+01]
+Eval Episode 9: Reward [-7.29326284e+05 -4.66314201e+01]
+Eval Episode 10: Reward [-7.3425645e+05 -7.1282249e+01]
+Evaluation at step 10000: Mean reward [-7.29691961e+05 -4.84598060e+01], Scalarized: -437834.561
+Model saved to ./models/continue_train_energynet_testing_1754423117_10000.pth
+Episode 209: Reward [-2.55663408e+05 -3.31704118e+00], Scalarized: -153399.372, Length 17
+Episode 210: Reward [-7.22507518e+05 -1.25375878e+01], Scalarized: -433509.526, Length 48
+Episode 211: Reward [-7.27469356e+05 -3.73467790e+01], Scalarized: -436496.552, Length 48
+Episode 212: Reward [-7.33154473e+05 -6.57723627e+01], Scalarized: -439918.992, Length 48
+Episode 213: Reward [-7.33284729e+05 -6.64236463e+01], Scalarized: -439997.407, Length 48
+Episode 214: Reward [-7.27947300e+05 -3.97364998e+01], Scalarized: -436784.275, Length 48
+Episode 215: Reward [-7.26920064e+05 -3.46003189e+01], Scalarized: -436165.878, Length 48
+Episode 216: Reward [-7.25381007e+05 -2.69050350e+01], Scalarized: -435239.366, Length 48
+Episode 217: Reward [-7.27675715e+05 -3.83785739e+01], Scalarized: -436620.780, Length 48
+Episode 218: Reward [-7.25948378e+05 -2.97418908e+01], Scalarized: -435580.924, Length 48
+Episode 219: Reward [-7.21845352e+05 -9.22676092e+00], Scalarized: -433110.902, Length 48
+Episode 220: Reward [-7.24202856e+05 -2.10142797e+01], Scalarized: -434530.119, Length 48
+Episode 221: Reward [-7.22274622e+05 -1.13731084e+01], Scalarized: -433369.322, Length 48
+Episode 222: Reward [-7.30840132e+05 -5.42006607e+01], Scalarized: -438525.760, Length 48
+Episode 223: Reward [-7.26241405e+05 -3.12070243e+01], Scalarized: -435757.326, Length 48
+Episode 224: Reward [-7.23649031e+05 -1.82451554e+01], Scalarized: -434196.717, Length 48
+Episode 225: Reward [-7.25532750e+05 -2.76637477e+01], Scalarized: -435330.715, Length 48
+Episode 226: Reward [-7.28086477e+05 -4.04323843e+01], Scalarized: -436868.059, Length 48
+Episode 227: Reward [-7.28341789e+05 -4.17089472e+01], Scalarized: -437021.757, Length 48
+Episode 228: Reward [-7.38356698e+05 -9.17834888e+01], Scalarized: -443050.732, Length 48
+Episode 229: Reward [-7.22532444e+05 -1.26622209e+01], Scalarized: -433524.531, Length 48
+Step 11000: {'critic_loss': 11319189.0, 'actor_loss': 34764.2109375, 'alpha_loss': 160.20147705078125, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 230: Reward [-7.32890149e+05 -6.44507445e+01], Scalarized: -439759.870, Length 48
+Episode 231: Reward [-7.25271452e+05 -2.63572579e+01], Scalarized: -435173.414, Length 48
+Episode 232: Reward [-7.25887829e+05 -2.94391431e+01], Scalarized: -435544.473, Length 48
+Episode 233: Reward [-7.23589972e+05 -1.79498590e+01], Scalarized: -434161.163, Length 48
+Episode 234: Reward [-7.29598535e+05 -4.79926770e+01], Scalarized: -437778.318, Length 48
+Episode 235: Reward [-7.26525432e+05 -3.26271624e+01], Scalarized: -435928.310, Length 48
+Episode 236: Reward [-7.25619031e+05 -2.80951567e+01], Scalarized: -435382.657, Length 48
+Episode 237: Reward [-7.25732752e+05 -2.86637580e+01], Scalarized: -435451.116, Length 48
+Episode 238: Reward [-7.36381644e+05 -8.19082224e+01], Scalarized: -441861.750, Length 48
+Episode 239: Reward [-7.23022187e+05 -1.51109335e+01], Scalarized: -433819.356, Length 48
+Episode 240: Reward [-7.28881891e+05 -4.44094565e+01], Scalarized: -437346.899, Length 48
+Episode 241: Reward [-7.28835306e+05 -4.41765300e+01], Scalarized: -437318.854, Length 48
+Episode 242: Reward [-7.30606428e+05 -5.30321377e+01], Scalarized: -438385.069, Length 48
+Episode 243: Reward [-7.28729841e+05 -4.36492055e+01], Scalarized: -437255.364, Length 48
+Episode 244: Reward [-7.28085745e+05 -4.04287252e+01], Scalarized: -436867.619, Length 48
+Episode 245: Reward [-7.25054225e+05 -2.52711234e+01], Scalarized: -435042.643, Length 48
+Episode 246: Reward [-7.30945161e+05 -5.47258032e+01], Scalarized: -438588.987, Length 48
+Episode 247: Reward [-7.30126407e+05 -5.06320340e+01], Scalarized: -438096.097, Length 48
+Episode 248: Reward [-7.26625437e+05 -3.31271847e+01], Scalarized: -435988.513, Length 48
+Episode 249: Reward [-7.26182504e+05 -3.09125207e+01], Scalarized: -435721.867, Length 48
+Episode 250: Reward [-7.22844310e+05 -1.42215512e+01], Scalarized: -433712.275, Length 48
+Step 12000: {'critic_loss': 16603107.0, 'actor_loss': 69579.15625, 'alpha_loss': 148.26182556152344, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 251: Reward [-7.30530208e+05 -5.26510401e+01], Scalarized: -438339.185, Length 48
+Episode 252: Reward [-7.28066501e+05 -4.03325049e+01], Scalarized: -436856.034, Length 48
+Episode 253: Reward [-7.25780539e+05 -2.89026950e+01], Scalarized: -435479.884, Length 48
+Episode 254: Reward [-7.20934694e+05 -4.67346869e+00], Scalarized: -432562.686, Length 48
+Episode 255: Reward [-7.32564801e+05 -6.28240031e+01], Scalarized: -439564.010, Length 48
+Episode 256: Reward [-7.26387868e+05 -3.19393388e+01], Scalarized: -435845.496, Length 48
+Episode 257: Reward [-7.31855372e+05 -5.92768611e+01], Scalarized: -439136.934, Length 48
+Episode 258: Reward [-7.24736885e+05 -2.36844233e+01], Scalarized: -434851.605, Length 48
+Episode 259: Reward [-7.29693533e+05 -4.84676642e+01], Scalarized: -437835.507, Length 48
+Episode 260: Reward [-7.31358234e+05 -5.67911713e+01], Scalarized: -438837.657, Length 48
+Episode 261: Reward [-7.28670036e+05 -4.33501791e+01], Scalarized: -437219.362, Length 48
+Episode 262: Reward [-7.23796135e+05 -1.89806770e+01], Scalarized: -434285.274, Length 48
+Episode 263: Reward [-7.21969694e+05 -9.84846883e+00], Scalarized: -433185.756, Length 48
+Episode 264: Reward [-7.27190807e+05 -3.59540364e+01], Scalarized: -436328.866, Length 48
+Episode 265: Reward [-7.27224057e+05 -3.61202848e+01], Scalarized: -436348.882, Length 48
+Episode 266: Reward [-7.32804534e+05 -6.40226706e+01], Scalarized: -439708.330, Length 48
+Episode 267: Reward [-7.37296337e+05 -8.64816858e+01], Scalarized: -442412.395, Length 48
+Episode 268: Reward [-7.36359666e+05 -8.17983296e+01], Scalarized: -441848.519, Length 48
+Episode 269: Reward [-7.23100812e+05 -1.55040593e+01], Scalarized: -433866.689, Length 48
+Episode 270: Reward [-7.26499681e+05 -3.24984059e+01], Scalarized: -435912.808, Length 48
+Episode 271: Reward [-7.28410141e+05 -4.20507055e+01], Scalarized: -437062.905, Length 48
+Step 13000: {'critic_loss': 195518976.0, 'actor_loss': 100656.453125, 'alpha_loss': 143.81228637695312, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 272: Reward [-7.29813595e+05 -4.90679731e+01], Scalarized: -437907.784, Length 48
+Episode 273: Reward [-7.25044457e+05 -2.52222865e+01], Scalarized: -435036.763, Length 48
+Episode 274: Reward [-7.28742336e+05 -4.37116794e+01], Scalarized: -437262.886, Length 48
+Episode 275: Reward [-7.23376691e+05 -1.68834571e+01], Scalarized: -434032.768, Length 48
+Episode 276: Reward [-7.28120980e+05 -4.06048992e+01], Scalarized: -436888.830, Length 48
+Episode 277: Reward [-7.29535596e+05 -4.76779796e+01], Scalarized: -437740.429, Length 48
+Episode 278: Reward [-7.23264514e+05 -1.63225720e+01], Scalarized: -433965.238, Length 48
+Episode 279: Reward [-7.38252571e+05 -9.12628528e+01], Scalarized: -442988.047, Length 48
+Episode 280: Reward [-7.25591040e+05 -2.79552005e+01], Scalarized: -435365.806, Length 48
+Episode 281: Reward [-7.26310663e+05 -3.15533143e+01], Scalarized: -435799.019, Length 48
+Episode 282: Reward [-7.29406433e+05 -4.70321652e+01], Scalarized: -437662.673, Length 48
+Episode 283: Reward [-7.25937421e+05 -2.96871026e+01], Scalarized: -435574.327, Length 48
+Episode 284: Reward [-7.32895633e+05 -6.44781634e+01], Scalarized: -439763.171, Length 48
+Episode 285: Reward [-7.31464249e+05 -5.73212431e+01], Scalarized: -438901.478, Length 48
+Episode 286: Reward [-7.25224076e+05 -2.61203786e+01], Scalarized: -435144.894, Length 48
+Episode 287: Reward [-7.26463574e+05 -3.23178713e+01], Scalarized: -435891.072, Length 48
+Episode 288: Reward [-7.29824831e+05 -4.91241530e+01], Scalarized: -437914.548, Length 48
+Episode 289: Reward [-7.26476762e+05 -3.23838100e+01], Scalarized: -435899.011, Length 48
+Episode 290: Reward [-7.30717983e+05 -5.35899138e+01], Scalarized: -438452.226, Length 48
+Episode 291: Reward [-7.20204873e+05 -1.02436527e+00], Scalarized: -432123.334, Length 48
+Episode 292: Reward [-7.25422140e+05 -2.71106976e+01], Scalarized: -435264.128, Length 48
+Step 14000: {'critic_loss': 427958272.0, 'actor_loss': 127400.5, 'alpha_loss': 143.81777954101562, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 293: Reward [-7.30536927e+05 -5.26846332e+01], Scalarized: -438343.230, Length 48
+Episode 294: Reward [-7.35959490e+05 -7.97974492e+01], Scalarized: -441607.613, Length 48
+Episode 295: Reward [-7.30288514e+05 -5.14425685e+01], Scalarized: -438193.685, Length 48
+Episode 296: Reward [-7.33404935e+05 -6.70246730e+01], Scalarized: -440069.771, Length 48
+Episode 297: Reward [-7.30808659e+05 -5.40432928e+01], Scalarized: -438506.812, Length 48
+Episode 298: Reward [-7.29411776e+05 -4.70588811e+01], Scalarized: -437665.889, Length 48
+Episode 299: Reward [-7.30449221e+05 -5.22461036e+01], Scalarized: -438290.431, Length 48
+Episode 300: Reward [-7.22683708e+05 -1.34185416e+01], Scalarized: -433615.592, Length 48
+Episode 301: Reward [-7.27046072e+05 -3.52303587e+01], Scalarized: -436241.735, Length 48
+Episode 302: Reward [-7.29456478e+05 -4.72823920e+01], Scalarized: -437692.800, Length 48
+Episode 303: Reward [-7.32260313e+05 -6.13015668e+01], Scalarized: -439380.709, Length 48
+Episode 304: Reward [-7.25277794e+05 -2.63889720e+01], Scalarized: -435177.232, Length 48
+Episode 305: Reward [-7.21911503e+05 -9.55751690e+00], Scalarized: -433150.725, Length 48
+Episode 306: Reward [-7.35454436e+05 -7.72721785e+01], Scalarized: -441303.570, Length 48
+Episode 307: Reward [-7.28390148e+05 -4.19507417e+01], Scalarized: -437050.869, Length 48
+Episode 308: Reward [-7.26549203e+05 -3.27460142e+01], Scalarized: -435942.620, Length 48
+Episode 309: Reward [-7.25428734e+05 -2.71436709e+01], Scalarized: -435268.098, Length 48
+Episode 310: Reward [-7.24384153e+05 -2.19207660e+01], Scalarized: -434639.260, Length 48
+Episode 311: Reward [-7.26413926e+05 -3.20696275e+01], Scalarized: -435861.183, Length 48
+Episode 312: Reward [-7.28366035e+05 -4.18301752e+01], Scalarized: -437036.353, Length 48
+Episode 313: Reward [-7.26565467e+05 -3.28273348e+01], Scalarized: -435952.411, Length 48
+Step 15000: {'critic_loss': 598052096.0, 'actor_loss': 150074.71875, 'alpha_loss': 141.944580078125, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Eval Episode 1: Reward [-7.25312801e+05 -2.65640041e+01]
+Eval Episode 2: Reward [-7.30323618e+05 -5.16180922e+01]
+Eval Episode 3: Reward [-7.24289069e+05 -2.14453455e+01]
+Eval Episode 4: Reward [-7.27723667e+05 -3.86183328e+01]
+Eval Episode 5: Reward [-7.21405870e+05 -7.02934884e+00]
+Eval Episode 6: Reward [-7.31369874e+05 -5.68493682e+01]
+Eval Episode 7: Reward [-7.28494029e+05 -4.24701470e+01]
+Eval Episode 8: Reward [-7.26323210e+05 -3.16160514e+01]
+Eval Episode 9: Reward [-7.24054424e+05 -2.02721205e+01]
+Eval Episode 10: Reward [-7.23865063e+05 -1.93253138e+01]
+Evaluation at step 15000: Mean reward [-7.26316162e+05 -3.15808124e+01], Scalarized: -435802.330
+Episode 314: Reward [-1.21847608e+05 -9.23803839e+00], Scalarized: -73112.260, Length 8
+Episode 315: Reward [-7.29687743e+05 -4.84387170e+01], Scalarized: -437832.022, Length 48
+Episode 316: Reward [-7.24045595e+05 -2.02279736e+01], Scalarized: -434435.448, Length 48
+Episode 317: Reward [-7.25519038e+05 -2.75951908e+01], Scalarized: -435322.461, Length 48
+Episode 318: Reward [-7.26549053e+05 -3.27452661e+01], Scalarized: -435942.530, Length 48
+Episode 319: Reward [-7.33303610e+05 -6.65180493e+01], Scalarized: -440008.773, Length 48
+Episode 320: Reward [-7.22752561e+05 -1.37628065e+01], Scalarized: -433657.042, Length 48
+Episode 321: Reward [-7.25167029e+05 -2.58351437e+01], Scalarized: -435110.551, Length 48
+Episode 322: Reward [-7.23174136e+05 -1.58706807e+01], Scalarized: -433910.830, Length 48
+Episode 323: Reward [-7.30429806e+05 -5.21490288e+01], Scalarized: -438278.743, Length 48
+Episode 324: Reward [-7.26593174e+05 -3.29658708e+01], Scalarized: -435969.091, Length 48
+Episode 325: Reward [-7.28190599e+05 -4.09529957e+01], Scalarized: -436930.741, Length 48
+Episode 326: Reward [-7.35194560e+05 -7.59728006e+01], Scalarized: -441147.125, Length 48
+Episode 327: Reward [-7.27733169e+05 -3.86658431e+01], Scalarized: -436655.368, Length 48
+Episode 328: Reward [-7.25186328e+05 -2.59316423e+01], Scalarized: -435122.170, Length 48
+Episode 329: Reward [-7.23144026e+05 -1.57201313e+01], Scalarized: -433892.704, Length 48
+Episode 330: Reward [-7.24990503e+05 -2.49525155e+01], Scalarized: -435004.283, Length 48
+Episode 331: Reward [-7.23013736e+05 -1.50686796e+01], Scalarized: -433814.269, Length 48
+Episode 332: Reward [-7.30770021e+05 -5.38501053e+01], Scalarized: -438483.553, Length 48
+Episode 333: Reward [-7.28236694e+05 -4.11834700e+01], Scalarized: -436958.490, Length 48
+Episode 334: Reward [-7.33643364e+05 -6.82168185e+01], Scalarized: -440213.305, Length 48
+Step 16000: {'critic_loss': 300270016.0, 'actor_loss': 170820.0625, 'alpha_loss': 149.71873474121094, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 335: Reward [-7.26431128e+05 -3.21556388e+01], Scalarized: -435871.539, Length 48
+Episode 336: Reward [-7.29790489e+05 -4.89524451e+01], Scalarized: -437893.874, Length 48
+Episode 337: Reward [-7.30212067e+05 -5.10603351e+01], Scalarized: -438147.664, Length 48
+Episode 338: Reward [-7.27982253e+05 -3.99112625e+01], Scalarized: -436805.316, Length 48
+Episode 339: Reward [-7.30026681e+05 -5.01334075e+01], Scalarized: -438036.062, Length 48
+Episode 340: Reward [-7.32432469e+05 -6.21623437e+01], Scalarized: -439484.346, Length 48
+Episode 341: Reward [-7.24074079e+05 -2.03703968e+01], Scalarized: -434452.596, Length 48
+Episode 342: Reward [-7.31421878e+05 -5.71093910e+01], Scalarized: -438875.971, Length 48
+Episode 343: Reward [-7.25980779e+05 -2.99038960e+01], Scalarized: -435600.429, Length 48
+Episode 344: Reward [-7.29402526e+05 -4.70126285e+01], Scalarized: -437660.320, Length 48
+Episode 345: Reward [-7.32626005e+05 -6.31300253e+01], Scalarized: -439600.855, Length 48
+Episode 346: Reward [-7.34122873e+05 -7.06143652e+01], Scalarized: -440501.970, Length 48
+Episode 347: Reward [-7.26563547e+05 -3.28177339e+01], Scalarized: -435951.255, Length 48
+Episode 348: Reward [-7.30344967e+05 -5.17248346e+01], Scalarized: -438227.670, Length 48
+Episode 349: Reward [-7.27716992e+05 -3.85849585e+01], Scalarized: -436645.629, Length 48
+Episode 350: Reward [-7.25249768e+05 -2.62488392e+01], Scalarized: -435160.360, Length 48
+Episode 351: Reward [-7.24021694e+05 -2.01084691e+01], Scalarized: -434421.060, Length 48
+Episode 352: Reward [-7.24748953e+05 -2.37447631e+01], Scalarized: -434858.869, Length 48
+Episode 353: Reward [-7.39061506e+05 -9.53075282e+01], Scalarized: -443475.026, Length 48
+Episode 354: Reward [-7.27716749e+05 -3.85837460e+01], Scalarized: -436645.483, Length 48
+Episode 355: Reward [-7.32769628e+05 -6.38481382e+01], Scalarized: -439687.316, Length 48
+Step 17000: {'critic_loss': 248087008.0, 'actor_loss': 188562.859375, 'alpha_loss': 141.24063110351562, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 356: Reward [-7.33929050e+05 -6.96452522e+01], Scalarized: -440385.288, Length 48
+Episode 357: Reward [-7.25351628e+05 -2.67581415e+01], Scalarized: -435221.680, Length 48
+Episode 358: Reward [-7.29870246e+05 -4.93512291e+01], Scalarized: -437941.888, Length 48
+Episode 359: Reward [-7.28392463e+05 -4.19623146e+01], Scalarized: -437052.263, Length 48
+Episode 360: Reward [-7.24576551e+05 -2.28827530e+01], Scalarized: -434755.083, Length 48
+Episode 361: Reward [-7.24890755e+05 -2.44537741e+01], Scalarized: -434944.234, Length 48
+Episode 362: Reward [-7.25613265e+05 -2.80663235e+01], Scalarized: -435379.185, Length 48
+Episode 363: Reward [-7.36398514e+05 -8.19925692e+01], Scalarized: -441871.905, Length 48
+Episode 364: Reward [-7.28083448e+05 -4.04172404e+01], Scalarized: -436866.236, Length 48
+Episode 365: Reward [-7.27388720e+05 -3.69435988e+01], Scalarized: -436448.009, Length 48
+Episode 366: Reward [-7.27158418e+05 -3.57920922e+01], Scalarized: -436309.368, Length 48
+Episode 367: Reward [-7.29200081e+05 -4.60004035e+01], Scalarized: -437538.449, Length 48
+Episode 368: Reward [-7.23168755e+05 -1.58437771e+01], Scalarized: -433907.591, Length 48
+Episode 369: Reward [-7.33881888e+05 -6.94094415e+01], Scalarized: -440356.897, Length 48
+Episode 370: Reward [-7.25689490e+05 -2.84474518e+01], Scalarized: -435425.073, Length 48
+Episode 371: Reward [-7.28807153e+05 -4.40357653e+01], Scalarized: -437301.906, Length 48
+Episode 372: Reward [-7.30684289e+05 -5.34214432e+01], Scalarized: -438431.942, Length 48
+Episode 373: Reward [-7.27395266e+05 -3.69763322e+01], Scalarized: -436451.950, Length 48
+Episode 374: Reward [-7.25638751e+05 -2.81937529e+01], Scalarized: -435394.528, Length 48
+Episode 375: Reward [-7.26735132e+05 -3.36756612e+01], Scalarized: -436054.550, Length 48
+Episode 376: Reward [-7.35349207e+05 -7.67460334e+01], Scalarized: -441240.222, Length 48
+Step 18000: {'critic_loss': 284367456.0, 'actor_loss': 204902.03125, 'alpha_loss': 140.0939178466797, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 377: Reward [-7.27962253e+05 -3.98112652e+01], Scalarized: -436793.276, Length 48
+Episode 378: Reward [-7.28597786e+05 -4.29889309e+01], Scalarized: -437175.867, Length 48
+Episode 379: Reward [-7.29848732e+05 -4.92436594e+01], Scalarized: -437928.937, Length 48
+Episode 380: Reward [-7.33580182e+05 -6.79009114e+01], Scalarized: -440175.270, Length 48
+Episode 381: Reward [-7.28399932e+05 -4.19996608e+01], Scalarized: -437056.759, Length 48
+Episode 382: Reward [-7.26851500e+05 -3.42575002e+01], Scalarized: -436124.603, Length 48
+Episode 383: Reward [-7.32908538e+05 -6.45426885e+01], Scalarized: -439770.940, Length 48
+Episode 384: Reward [-7.24612002e+05 -2.30600112e+01], Scalarized: -434776.425, Length 48
+Episode 385: Reward [-7.24787637e+05 -2.39381846e+01], Scalarized: -434882.157, Length 48
+Episode 386: Reward [-7.23358960e+05 -1.67948019e+01], Scalarized: -434022.094, Length 48
+Episode 387: Reward [-7.35897134e+05 -7.94856713e+01], Scalarized: -441570.075, Length 48
+Episode 388: Reward [-7.24092451e+05 -2.04622564e+01], Scalarized: -434463.656, Length 48
+Episode 389: Reward [-7.29354413e+05 -4.67720666e+01], Scalarized: -437631.357, Length 48
+Episode 390: Reward [-7.25696452e+05 -2.84822602e+01], Scalarized: -435429.264, Length 48
+Episode 391: Reward [-7.25995735e+05 -2.99786757e+01], Scalarized: -435609.433, Length 48
+Episode 392: Reward [-7.26484438e+05 -3.24221895e+01], Scalarized: -435903.632, Length 48
+Episode 393: Reward [-7.26187515e+05 -3.09375744e+01], Scalarized: -435724.884, Length 48
+Episode 394: Reward [-7.27006601e+05 -3.50330041e+01], Scalarized: -436217.974, Length 48
+Episode 395: Reward [-7.28841094e+05 -4.42054691e+01], Scalarized: -437322.338, Length 48
+Episode 396: Reward [-7.20878967e+05 -4.39483579e+00], Scalarized: -432529.138, Length 48
+Episode 397: Reward [-7.32497384e+05 -6.24869179e+01], Scalarized: -439523.425, Length 48
+Step 19000: {'critic_loss': 627002624.0, 'actor_loss': 217614.03125, 'alpha_loss': 149.79629516601562, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Episode 398: Reward [-7.29177362e+05 -4.58868109e+01], Scalarized: -437524.772, Length 48
+Episode 399: Reward [-7.28860733e+05 -4.43036638e+01], Scalarized: -437334.161, Length 48
+Episode 400: Reward [-7.26150635e+05 -3.07531762e+01], Scalarized: -435702.682, Length 48
+Episode 401: Reward [-7.25511421e+05 -2.75571062e+01], Scalarized: -435317.876, Length 48
+Episode 402: Reward [-7.24460627e+05 -2.23031356e+01], Scalarized: -434685.298, Length 48
+Episode 403: Reward [-7.29103848e+05 -4.55192378e+01], Scalarized: -437480.516, Length 48
+Episode 404: Reward [-7.33031908e+05 -6.51595407e+01], Scalarized: -439845.209, Length 48
+Episode 405: Reward [-7.21437426e+05 -7.18713208e+00], Scalarized: -432865.331, Length 48
+Episode 406: Reward [-7.23909700e+05 -1.95484991e+01], Scalarized: -434353.639, Length 48
+Episode 407: Reward [-7.25891383e+05 -2.94569149e+01], Scalarized: -435546.613, Length 48
+Episode 408: Reward [-7.27987792e+05 -3.99389582e+01], Scalarized: -436808.651, Length 48
+Episode 409: Reward [-7.25435111e+05 -2.71755533e+01], Scalarized: -435271.937, Length 48
+Episode 410: Reward [-7.24570889e+05 -2.28544442e+01], Scalarized: -434751.675, Length 48
+Episode 411: Reward [-7.28524653e+05 -4.26232669e+01], Scalarized: -437131.841, Length 48
+Episode 412: Reward [-7.26872993e+05 -3.43649654e+01], Scalarized: -436137.542, Length 48
+Episode 413: Reward [-7.23718756e+05 -1.85937789e+01], Scalarized: -434238.691, Length 48
+Episode 414: Reward [-7.26936810e+05 -3.46840508e+01], Scalarized: -436175.960, Length 48
+Episode 415: Reward [-7.29720407e+05 -4.86020350e+01], Scalarized: -437851.685, Length 48
+Episode 416: Reward [-7.33379581e+05 -6.68979063e+01], Scalarized: -440054.508, Length 48
+Episode 417: Reward [-7.25662252e+05 -2.83112583e+01], Scalarized: -435408.676, Length 48
+Episode 418: Reward [-7.26566525e+05 -3.28326254e+01], Scalarized: -435953.048, Length 48
+Step 20000: {'critic_loss': 517441024.0, 'actor_loss': 229281.640625, 'alpha_loss': 142.87799072265625, 'alpha': 0.0012032021768391132} | GPU: 0.0/10.9 GB
+Eval Episode 1: Reward [-7.29356920e+05 -4.67845976e+01]
+Eval Episode 2: Reward [-7.29358302e+05 -4.67915099e+01]
+Eval Episode 3: Reward [-7.27818392e+05 -3.90919578e+01]
+Eval Episode 4: Reward [-7.35588929e+05 -7.79446458e+01]
+Eval Episode 5: Reward [-7.30382515e+05 -5.19125733e+01]
+Eval Episode 6: Reward [-7.27591263e+05 -3.79563166e+01]
+Eval Episode 7: Reward [-7.28948944e+05 -4.47447188e+01]
+Eval Episode 8: Reward [-7.34661976e+05 -7.33098796e+01]
+Eval Episode 9: Reward [-7.27220975e+05 -3.61048728e+01]
+Eval Episode 10: Reward [-7.27247090e+05 -3.62354485e+01]
+Evaluation at step 20000: Mean reward [-7.29817530e+05 -4.90876521e+01], Scalarized: -437910.153
+Model saved to ./models/continue_train_energynet_testing_1754423117_20000.pth
+TensorBoard logger closed and data flushed
+\n============================================================
+Training Completed!
+============================================================
+Additional training time: 280.34 seconds (0.08 hours)
+\nPerforming final evaluation...
+\nFinal Performance (50 episodes):
+  Cost reward: -727288.670 ± 3378.334
+  Stability reward: -36.443 ± 16.892
+  Scalarized reward: -436387.779 ± 2033.757
+\nImprovement:
+  Cost reward: +418.488
+  Stability reward: +2.092
+  Scalarized: +251.930
+Model saved to ./models/continue_train_energynet_testing_1754423117_final.pth
+\nResults saved:
+  Config: ./continue_train_energynet_testing_1754423117_config.json
+  Results: ./continue_train_energynet_testing_1754423117_results.json
+  Final model: ./models/continue_train_energynet_testing_1754423117_final.pth
+  Tensorboard logs: ./logs/continue_train_energynet_testing_1754423117
+\nContinued training completed successfully!
+Final scalarized performance: -436387.779
+Improvement: +251.930
+Copying results back to original directory...
+Models copied to: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/
+Logs (including TensorBoard) copied to: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/logs/
+Final model copied to root directory
+
+==========================================
+EnergyNet continue training completed successfully!
+==========================================
+SLURM Job ID: 324377
+Original Model: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/Experiments/First/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Experiment Name: continue_train_energynet_testing
+Additional Training Timesteps: 20000
+Results copied back to: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing
+
+Results should be in:
+  - /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/                (config and results files: continue_train_energynet_testing_*)
+  - /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/         (continued trained model files)
+  - /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/logs/           (tensorboard logs: continue_train_energynet_testing)
+  - /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/plots/          (training plots and analysis)
+  - /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/checkpoints/    (training checkpoints)
+
+To view results:
+  ./view_results.sh
+
+To view tensorboard logs:
+  tensorboard --logdir /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/logs/ --host 0.0.0.0 --port 6006
+
+SLURM output files:
+  - slurm_continue_energynet_324377.out (standard output)
+  - slurm_continue_energynet_324377.err (error output)
+Cleaning up temporary directory: /tmp/energynet_continue_training_matan.biton_3626613

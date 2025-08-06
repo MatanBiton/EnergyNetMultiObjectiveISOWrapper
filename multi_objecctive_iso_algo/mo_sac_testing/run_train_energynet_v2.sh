@@ -21,12 +21,22 @@
 #   # Custom experiment name and timesteps
 #   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh baseline_test 200000
 #
+#   # With learning rate and batch size
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh experiment1 200000 0.001 512
+#
+#   # With all parameters including seed for reproducibility
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh reproducible_test 200000 0.0003 256 42
+#
 #   # With optimizations (use environment variables)
 #   ENABLE_LR_ANNEALING=true ENABLE_REWARD_SCALING=true \
 #   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh optimized_run 500000
 #
-#   # Full optimization suite
-#   ENABLE_ALL_OPTIMIZATIONS=true LR_ANNEALING_TYPE=cosine VALUE_CLIP_RANGE=150.0 \
+#   # With environment configuration (dispatch action enabled)
+#   USE_DISPATCH_ACTION=true DISPATCH_STRATEGY=UNIFORM \
+#   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh dispatch_test 200000
+#
+#   # Full optimization suite with environment config and seed
+#   ENABLE_ALL_OPTIMIZATIONS=true USE_DISPATCH_ACTION=true LR_ANNEALING_TYPE=cosine VALUE_CLIP_RANGE=150.0 RANDOM_SEED=123 \
 #   sbatch -c 4 --gres=gpu:1 ./run_train_energynet_v2.sh full_opt 1000000
 
 echo "=========================================="
@@ -295,7 +305,8 @@ fi
 EXPERIMENT_NAME=${1:-"default"}  # First argument: experiment name (default: "default")
 EPISODES=${2:-100000}  # Second argument: episodes (default: 100k episodes)
 LEARNING_RATE=${3:-0.0003}  # Third argument: learning rate
-BATCH_SIZE=${4:-256}  # Fourth argument: batch size
+BATCH_SIZE=${4:-1024}  # Fourth argument: batch size
+SEED=${5:-${RANDOM_SEED:-}}  # Fifth argument: random seed (default: random or from env var)
 
 # Optimization parameters (controlled via environment variables)
 # Learning Rate Annealing
@@ -319,6 +330,11 @@ CRITIC_ORTHOGONAL_GAIN=${CRITIC_ORTHOGONAL_GAIN:-1.0}
 ENABLE_VALUE_CLIPPING=${ENABLE_VALUE_CLIPPING:-false}
 VALUE_CLIP_RANGE=${VALUE_CLIP_RANGE:-200.0}
 
+# Environment Configuration
+USE_DISPATCH_ACTION=${USE_DISPATCH_ACTION:-false}
+DISPATCH_STRATEGY=${DISPATCH_STRATEGY:-PROPORTIONAL}
+TRAINED_PCS_MODEL=${TRAINED_PCS_MODEL:-}
+
 # Special option to enable all optimizations with good defaults
 if [ "$ENABLE_ALL_OPTIMIZATIONS" = "true" ]; then
     ENABLE_LR_ANNEALING=true
@@ -333,6 +349,11 @@ echo "  Experiment Name: $EXPERIMENT_NAME"
 echo "  Episodes: $EPISODES"
 echo "  Learning Rate: $LEARNING_RATE"
 echo "  Batch Size: $BATCH_SIZE"
+if [ -n "$SEED" ]; then
+    echo "  Random Seed: $SEED"
+else
+    echo "  Random Seed: Not specified (will use random)"
+fi
 echo ""
 echo "Optimization Parameters:"
 echo "  LR Annealing: $ENABLE_LR_ANNEALING"
@@ -353,6 +374,21 @@ fi
 echo "  Value Clipping: $ENABLE_VALUE_CLIPPING"
 [ "$ENABLE_VALUE_CLIPPING" = "true" ] && echo "    Clip Range: $VALUE_CLIP_RANGE"
 echo ""
+echo "Environment Configuration:"
+echo "  Use Dispatch Action: $USE_DISPATCH_ACTION"
+echo "  Dispatch Strategy: $DISPATCH_STRATEGY"
+if [ -n "$TRAINED_PCS_MODEL" ]; then
+    echo "  Trained PCS Model: $TRAINED_PCS_MODEL"
+    # Check if PCS model exists
+    if [ ! -f "$TRAINED_PCS_MODEL" ]; then
+        echo "  ⚠ Warning: PCS model file not found: $TRAINED_PCS_MODEL"
+    else
+        echo "  ✓ PCS model file found"
+    fi
+else
+    echo "  Trained PCS Model: None (using default PCS)"
+fi
+echo ""
 
 # Create Python arguments array
 PYTHON_ARGS=(
@@ -365,6 +401,11 @@ PYTHON_ARGS=(
     "--save-freq" "10000"
     "--verbose"
 )
+
+# Add seed if specified
+if [ -n "$SEED" ]; then
+    PYTHON_ARGS+=("--seed" "$SEED")
+fi
 
 # Add optimization arguments
 if [ "$ENABLE_LR_ANNEALING" = "true" ]; then
@@ -390,6 +431,17 @@ fi
 if [ "$ENABLE_VALUE_CLIPPING" = "true" ]; then
     PYTHON_ARGS+=("--use-value-clipping")
     PYTHON_ARGS+=("--value-clip-range" "$VALUE_CLIP_RANGE")
+fi
+
+# Add environment configuration arguments
+if [ "$USE_DISPATCH_ACTION" = "true" ]; then
+    PYTHON_ARGS+=("--use-dispatch-action")
+fi
+
+PYTHON_ARGS+=("--dispatch-strategy" "$DISPATCH_STRATEGY")
+
+if [ -n "$TRAINED_PCS_MODEL" ]; then
+    PYTHON_ARGS+=("--trained-pcs-model" "$TRAINED_PCS_MODEL")
 fi
 
 # Training arguments are set above - no additional GPU logic needed here

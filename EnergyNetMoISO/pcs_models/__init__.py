@@ -13,4 +13,10 @@ except ImportError:
     # PPO agent might have additional dependencies
     PPOPCSAgent = None
 
-__all__ = ["ConstantPCSAgent", "GenericPCSAgent", "PPOPCSAgent"]
+try:
+    from .sac_pcs_agent import SACPCSAgent
+except ImportError:
+    # SAC agent might have additional dependencies
+    SACPCSAgent = None
+
+__all__ = ["ConstantPCSAgent", "GenericPCSAgent", "PPOPCSAgent", "SACPCSAgent"]

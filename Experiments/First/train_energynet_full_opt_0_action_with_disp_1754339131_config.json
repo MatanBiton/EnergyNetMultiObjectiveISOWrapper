@@ -1,0 +1,53 @@
+{
+  "env_config": {
+    "use_dispatch_action": true,
+    "dispatch_strategy": "PROPORTIONAL"
+  },
+  "training_params": {
+    "total_timesteps": 300000,
+    "learning_starts": 10000,
+    "train_freq": 1,
+    "eval_freq": 5000,
+    "eval_episodes": 10,
+    "save_freq": 10000
+  },
+  "agent_params": {
+    "weights": [
+      0.6,
+      0.4
+    ],
+    "actor_lr": 0.0003,
+    "critic_lr": 0.0003,
+    "alpha_lr": 0.0003,
+    "gamma": 0.99,
+    "tau": 0.005,
+    "alpha": 0.2,
+    "auto_tune_alpha": true,
+    "actor_hidden_dims": [
+      256,
+      256
+    ],
+    "critic_hidden_dims": [
+      256,
+      256
+    ],
+    "buffer_capacity": 1000000,
+    "batch_size": 1024,
+    "use_lr_annealing": true,
+    "lr_annealing_type": "cosine",
+    "lr_annealing_steps": null,
+    "lr_min_factor": 0.1,
+    "lr_decay_rate": 0.95,
+    "use_reward_scaling": true,
+    "reward_scale_epsilon": 0.0001,
+    "use_orthogonal_init": true,
+    "orthogonal_gain": 1.0,
+    "actor_orthogonal_gain": 0.01,
+    "critic_orthogonal_gain": 1.0,
+    "use_value_clipping": true,
+    "value_clip_range": 200.0
+  },
+  "reproducibility": {
+    "seed": 42
+  }
+}

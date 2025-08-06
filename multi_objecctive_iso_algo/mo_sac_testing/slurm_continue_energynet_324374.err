@@ -1,0 +1,10 @@
+/home/matan.biton/miniconda3/envs/IsoMOEnergyNet/lib/python3.10/site-packages/energy_net/iso_controller.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+Traceback (most recent call last):
+  File "/tmp/energynet_continue_training_matan.biton_3624301/continue_train_energynet.py", line 482, in <module>
+    main()
+  File "/tmp/energynet_continue_training_matan.biton_3624301/continue_train_energynet.py", line 461, in main
+    results = continue_train_mo_sac_on_energynet(
+  File "/tmp/energynet_continue_training_matan.biton_3624301/continue_train_energynet.py", line 127, in continue_train_mo_sac_on_energynet
+    checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
+NameError: name 'torch' is not defined
