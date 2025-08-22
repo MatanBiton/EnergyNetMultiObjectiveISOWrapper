@@ -1,0 +1,30 @@
+Multi-Seed Training Summary
+==========================
+SLURM Job ID: 323757
+Base Experiment Name: test_full_opt
+Training Episodes per run: 10000
+Learning Rate: 0.0003
+Batch Size: 256
+Seeds used: 42 123 456 789 1337
+Total Duration: 0h 5m 1s
+
+Environment Variables:
+  LR_ANNEALING_TYPE=cosine
+  VALUE_CLIP_RANGE=150.0
+  ENABLE_ALL_OPTIMIZATIONS=true
+
+Results:
+  Successful runs: 5/5
+  Failed runs: 0/5
+
+Generated experiments:
+  Run 1: train_energynet_test_full_opt_1 (seed: 42) - FAILED
+  Run 2: train_energynet_test_full_opt_2 (seed: 123) - FAILED
+  Run 3: train_energynet_test_full_opt_3 (seed: 456) - FAILED
+  Run 4: train_energynet_test_full_opt_4 (seed: 789) - FAILED
+  Run 5: train_energynet_test_full_opt_5 (seed: 1337) - FAILED
+
+Averaged Results:
+  Averaged TensorBoard logs: logs/train_energynet_test_full_opt_averaged
+  Summary report: averaged_summary_test_full_opt.txt
+  View averaged results: tensorboard --logdir logs/train_energynet_test_full_opt_averaged

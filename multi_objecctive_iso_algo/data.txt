@@ -1,0 +1,21 @@
+Info dict contains 20 entries:
+  predicted_demand: float = 150.0
+  realized_demand: float = 154.54673385214113
+  pcs_demand: float = 1.0
+  net_demand: float = 155.54673385214113
+  dispatch: float = 150.0
+  shortfall: float = 5.546733852141131
+  dispatch_cost: float = 15000.0
+  reserve_cost: float = 1109.3467704282261
+  pcs_costs: float = 1.2567683458328247
+  production: float = 0.0
+  consumption: float = 0.0
+  battery_level: list (len=1) = [40.0]
+  battery_actions: list (len=1) = [1]
+  buy_price: float = 6.046400547027588
+  sell_price: float = 1.2567683458328247
+  iso_buy_price: float = 6.046400547027588
+  iso_sell_price: float = 1.2567683458328247
+  net_exchange: float = 1.0
+  pcs_cost: float = 1.2567683458328247
+  pcs_actions: list (len=1) = [1]

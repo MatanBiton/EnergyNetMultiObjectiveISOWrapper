@@ -1,0 +1,204 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energynet-multi-objective-iso-wrapper"
+version = "0.1.0"
+description = "Multi-objective reinforcement learning wrapper for EnergyNet ISO environments"
+authors = [
+    {name = "Matan Biton", email = "matan.biton@technion.ac.il"}
+]
+maintainers = [
+    {name = "Matan Biton", email = "matan.biton@technion.ac.il"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+keywords = [
+    "reinforcement-learning", 
+    "multi-objective", 
+    "energy-systems", 
+    "iso", 
+    "power-systems",
+    "deep-reinforcement-learning"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    # Core dependencies
+    "numpy>=1.21.0",
+    "torch>=1.12.0",
+    "gymnasium>=0.26.0",
+    "tensorboard>=2.10.0",
+    
+    # Machine Learning
+    "stable-baselines3>=2.0.0",
+    
+    # Visualization and analysis
+    "matplotlib>=3.5.0",
+    
+    # EnergyNet package (from Git)
+    "energy-net @ git+https://github.com/MatanBiton/EnergyNetV0.git",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.991",
+    "pre-commit>=2.20.0",
+]
+
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.8.0",
+    "coverage>=6.0.0",
+]
+
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=0.18.0",
+]
+
+all = [
+    "energynet-multi-objective-iso-wrapper[dev,test,docs]"
+]
+
+[project.urls]
+Homepage = "https://github.com/MatanBiton/EnergyNetMultiObjectiveISOWrapper"
+Repository = "https://github.com/MatanBiton/EnergyNetMultiObjectiveISOWrapper"
+Issues = "https://github.com/MatanBiton/EnergyNetMultiObjectiveISOWrapper/issues"
+Documentation = "https://github.com/MatanBiton/EnergyNetMultiObjectiveISOWrapper#readme"
+
+[project.scripts]
+mosac-train = "training.mosac_training:main"
+pcn-train = "training.pcn_training:main"
+sac-pcs-train = "training.sac_pcs_training:main"
+
+[tool.setuptools]
+packages = [
+    "EnergyNetMoISO",
+    "EnergyNetMoISO.pcs_models", 
+    "multi_objecctive_iso_algo",
+    "multi_objecctive_iso_algo.mo_sac_testing",
+    "training",
+    "testing",
+    "folder_testing",
+]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.txt", "*.md", "*.sh"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["EnergyNetMoISO", "multi_objecctive_iso_algo"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Set to false initially due to existing codebase
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "energy_net.*",
+    "stable_baselines3.*",
+    "gymnasium.*",
+    "torch.*",
+    "tensorboard.*",
+    "matplotlib.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["testing", "tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=EnergyNetMoISO",
+    "--cov=multi_objecctive_iso_algo",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["EnergyNetMoISO", "multi_objecctive_iso_algo"]
+omit = [
+    "*/tests/*",
+    "*/testing/*",
+    "*/__pycache__/*",
+    "*/.*",
+    "setup.py",
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "docs/source/conf.py",
+    "old",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    ".eggs",
+    "*.egg",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "testing"]
+skips = ["B101", "B601"]

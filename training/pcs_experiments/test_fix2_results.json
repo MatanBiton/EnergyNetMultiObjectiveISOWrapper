@@ -1,0 +1,89 @@
+{
+  "experiment_name": "test_fix2",
+  "training_time": 2.8669545650482178,
+  "total_timesteps": 500,
+  "total_episodes": 10,
+  "final_evaluation": {
+    "mean": 1324.6477249145507,
+    "std": 7.102048924067845,
+    "rewards": [
+      1293.6906113624573,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504,
+      1326.2770466804504
+    ]
+  },
+  "best_evaluation": -Infinity,
+  "episode_rewards": [
+    -1361.1290889978409,
+    -591.9391479417682,
+    -70.20449168980122,
+    -2039.123187854886,
+    -1043.3947661221027,
+    -1165.0340861156583,
+    -1086.3802194744349,
+    -1436.519551128149,
+    -391.8940884768963,
+    -438.3912546001375
+  ],
+  "episode_lengths": [
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48
+  ],
+  "evaluation_results": [],
+  "training_metrics": [],
+  "model_paths": {
+    "final": "pcs_experiments/models/test_fix2_final.pth",
+    "best": "pcs_experiments/models/test_fix2_best.pth"
+  },
+  "config": {
+    "trained_iso_model_path": null,
+    "state_dim": 4,
+    "action_dim": 1,
+    "action_bounds": [
+      -10.0,
+      10.0
+    ],
+    "agent_params": {
+      "actor_lr": 0.0003,
+      "critic_lr": 0.0003,
+      "alpha_lr": 0.0003,
+      "gamma": 0.99,
+      "tau": 0.005,
+      "alpha": 0.2,
+      "auto_tune_alpha": true,
+      "buffer_capacity": 1000000,
+      "batch_size": 64,
+      "use_lr_annealing": false,
+      "lr_annealing_type": "cosine",
+      "lr_annealing_steps": null,
+      "use_reward_scaling": false,
+      "use_orthogonal_init": false,
+      "use_value_clipping": false
+    }
+  }
+}

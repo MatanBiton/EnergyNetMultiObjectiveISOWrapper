@@ -1,0 +1,295 @@
+==========================================
+SAC PCS Training (SLURM)
+==========================================
+Job ID: 324373
+Job Name: sac_pcs_training
+Node: lambda1
+CPUs: 4
+GPUs: 0
+Memory: 32768 MB
+==========================================
+Arguments:
+  Experiment Name: no_opt_iso_opt_no_disp
+  Total Timesteps: 300000
+  Learning Rate: 0.0003
+  Batch Size: 1024
+  ISO Model Path: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+  Seed: 42
+
+Environment variables for optimizations:
+  ENABLE_LR_ANNEALING: false
+  LR_ANNEALING_TYPE: cosine
+  LR_ANNEALING_STEPS: auto
+  LR_MIN_FACTOR: 0.1
+  LR_DECAY_RATE: 0.95
+  ENABLE_REWARD_SCALING: false
+  REWARD_SCALE_EPSILON: 1e-4
+  ENABLE_ORTHOGONAL_INIT: false
+  ORTHOGONAL_GAIN: 1.0
+  ACTOR_ORTHOGONAL_GAIN: 0.01
+  CRITIC_ORTHOGONAL_GAIN: 1.0
+  ENABLE_VALUE_CLIPPING: false
+  VALUE_CLIP_RANGE: 200.0
+  ENABLE_ALL_OPTIMIZATIONS: true
+
+Enabling all optimizations with good defaults...
+All optimizations enabled.
+Using Python: python3
+Python version: Python 3.10.9
+
+GPU available: 0
+PyTorch CUDA available: True
+GPU count: 1
+
+Running under SLURM - using submit directory: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training
+Script directory: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training
+Current working directory: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training
+
+Checking imports...
+   ✓ PyTorch available
+   ✓ NumPy available
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+   ✓ PCSUnitEnv import successful
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+   ✓ SACPCSAgent import successful
+
+Running under SLURM job manager
+Set OMP_NUM_THREADS to 4
+Memory limit: 32768MB
+Using ISO model: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Using seed: 42
+==========================================
+Final training command:
+python3 sac_pcs_training.py --experiment-name no_opt_iso_opt_no_disp --total-timesteps 300000 --actor-lr 0.0003 --critic-lr 0.0003 --alpha-lr 0.0003 --batch-size 1024 --verbose --trained-iso-model-path /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth --seed 42 --use-lr-annealing --lr-annealing-type cosine --lr-min-factor 0.05 --lr-decay-rate 0.95 --use-reward-scaling --reward-scale-epsilon 1e-4 --use-orthogonal-init --orthogonal-gain 1.0 --actor-orthogonal-gain 0.01 --critic-orthogonal-gain 1.0 --use-value-clipping --value-clip-range 150.0
+==========================================
+
+Experiment directory: pcs_experiments
+Training started at: Tue 05 Aug 2025 09:59:32 PM IDT
+
+Starting SAC PCS training...
+Registering PCSUnitEnv-v0
+Registering ISOEnv-v0
+Registering EnergyNetEnv-v0
+Registering ISO-RLZoo-v0
+Registering PCS-RLZoo-v0
+================================================================================
+Training SAC on PCS Unit Environment
+Experiment: no_opt_iso_opt_no_disp
+================================================================================
+Set random seed: 42
+Loading trained ISO model from: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Warning: Could not load ISO model: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m. 
+	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+	WeightsUnpickler error: Unsupported global: GLOBAL numpy.core.multiarray._reconstruct was not an allowed global by default. Please use `torch.serialization.add_safe_globals([numpy.core.multiarray._reconstruct])` or the `torch.serialization.safe_globals([numpy.core.multiarray._reconstruct])` context manager to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+Proceeding without trained ISO model
+Environment Configuration:
+  State dimension: 4
+  Action dimension: 1
+  Action bounds: (-10.0, 10.0)
+  ISO model path: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/multi_objecctive_iso_algo/mo_sac_testing/models/train_energynet_full_opt_0_action_no_disp_1754339196_final.pth
+Using device: cuda
+Optimization features enabled:
+  LR Annealing: True
+  Reward Scaling: True
+  Orthogonal Init: True
+  Value Clipping: True
+
+Agent Configuration:
+  Actor LR: 0.0003
+  Critic LR: 0.0003
+  Alpha LR: 0.0003
+  Gamma: 0.99
+  Tau: 0.005
+  Buffer capacity: 1000000
+  Batch size: 1024
+
+Starting training for 300,000 timesteps...
+Episode   100 | Timestep    4799 | Reward: -1607.99 | Length:  48 | Avg(100):  -843.40
+Episode   200 | Timestep    9599 | Reward: -2919.94 | Length:  48 | Avg(100):  -627.64
+Episode   300 | Timestep   14399 | Reward:  1209.48 | Length:  48 | Avg(100):   974.47
+Episode   400 | Timestep   19199 | Reward:  1426.05 | Length:  48 | Avg(100):  1319.92
+
+Evaluating at timestep 20,000...
+Evaluation: 1664.50 ± 0.66
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 1664.50
+Episode   500 | Timestep   23985 | Reward:  1911.93 | Length:  48 | Avg(100):  1662.56
+Episode   600 | Timestep   28785 | Reward:  2431.80 | Length:  48 | Avg(100):  2130.49
+Episode   700 | Timestep   33585 | Reward:  2483.93 | Length:  48 | Avg(100):  2527.09
+Episode   800 | Timestep   38385 | Reward:  2756.20 | Length:  48 | Avg(100):  2545.79
+
+Evaluating at timestep 40,000...
+Evaluation: 2381.76 ± 0.19
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 2381.76
+Episode   900 | Timestep   43169 | Reward:  2514.74 | Length:  48 | Avg(100):  2438.27
+Episode  1000 | Timestep   47969 | Reward:  2639.07 | Length:  48 | Avg(100):  2594.85
+Episode  1100 | Timestep   52769 | Reward:  2646.17 | Length:  48 | Avg(100):  2637.48
+Episode  1200 | Timestep   57569 | Reward:  2545.03 | Length:  48 | Avg(100):  2540.00
+
+Evaluating at timestep 60,000...
+Evaluation: 2615.05 ± 0.13
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 2615.05
+Episode  1300 | Timestep   62353 | Reward:  2595.88 | Length:  48 | Avg(100):  2553.27
+Episode  1400 | Timestep   67153 | Reward:  2616.82 | Length:  48 | Avg(100):  2631.96
+Episode  1500 | Timestep   71953 | Reward:  2789.68 | Length:  48 | Avg(100):  2732.77
+Episode  1600 | Timestep   76753 | Reward:  2397.88 | Length:  48 | Avg(100):  2465.32
+
+Evaluating at timestep 80,000...
+Evaluation: 2650.80 ± 0.60
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 2650.80
+Episode  1700 | Timestep   81537 | Reward:  2418.13 | Length:  48 | Avg(100):  2566.85
+Episode  1800 | Timestep   86337 | Reward:  2683.40 | Length:  48 | Avg(100):  2419.98
+Episode  1900 | Timestep   91137 | Reward:  2617.96 | Length:  48 | Avg(100):  2701.94
+Episode  2000 | Timestep   95937 | Reward:  2691.91 | Length:  48 | Avg(100):  2727.00
+
+Evaluating at timestep 100,000...
+Evaluation: 2736.49 ± 0.19
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 2736.49
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_checkpoint_100000.pth
+Checkpoint saved: pcs_experiments/models/no_opt_iso_opt_no_disp_checkpoint_100000.pth
+Episode  2100 | Timestep  100721 | Reward:  2707.05 | Length:  48 | Avg(100):  2688.74
+Episode  2200 | Timestep  105521 | Reward:  2748.15 | Length:  48 | Avg(100):  2686.08
+Episode  2300 | Timestep  110321 | Reward:  2606.80 | Length:  48 | Avg(100):  2687.64
+Episode  2400 | Timestep  115121 | Reward:  2699.84 | Length:  48 | Avg(100):  2604.74
+Episode  2500 | Timestep  119921 | Reward:  2576.46 | Length:  48 | Avg(100):  2589.16
+
+Evaluating at timestep 120,000...
+Evaluation: 2508.56 ± 0.93
+Episode  2600 | Timestep  124705 | Reward:  2719.08 | Length:  48 | Avg(100):  2647.91
+Episode  2700 | Timestep  129505 | Reward:  2082.25 | Length:  48 | Avg(100):  2517.19
+Episode  2800 | Timestep  134305 | Reward:  2771.99 | Length:  48 | Avg(100):  2341.71
+Episode  2900 | Timestep  139105 | Reward:  2784.08 | Length:  48 | Avg(100):  2776.71
+
+Evaluating at timestep 140,000...
+Evaluation: 2879.45 ± 0.65
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 2879.45
+Episode  3000 | Timestep  143889 | Reward:  2721.17 | Length:  48 | Avg(100):  2715.43
+Episode  3100 | Timestep  148689 | Reward:  2766.33 | Length:  48 | Avg(100):  2755.95
+Episode  3200 | Timestep  153489 | Reward:  2860.00 | Length:  48 | Avg(100):  2821.69
+Episode  3300 | Timestep  158289 | Reward:  2916.40 | Length:  48 | Avg(100):  2716.17
+
+Evaluating at timestep 160,000...
+Evaluation: 2924.51 ± 0.51
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+New best model saved: 2924.51
+Episode  3400 | Timestep  163073 | Reward:  2774.57 | Length:  48 | Avg(100):  2764.98
+Episode  3500 | Timestep  167873 | Reward:  2669.07 | Length:  48 | Avg(100):  2730.94
+Episode  3600 | Timestep  172673 | Reward:  2834.60 | Length:  48 | Avg(100):  2742.43
+Episode  3700 | Timestep  177473 | Reward:  2832.92 | Length:  48 | Avg(100):  2751.91
+
+Evaluating at timestep 180,000...
+Evaluation: 2811.79 ± 0.21
+Episode  3800 | Timestep  182257 | Reward:  2615.51 | Length:  48 | Avg(100):  2724.28
+Episode  3900 | Timestep  187057 | Reward:  2024.88 | Length:  48 | Avg(100):  2388.20
+Episode  4000 | Timestep  191857 | Reward:  2903.12 | Length:  48 | Avg(100):  2418.39
+Episode  4100 | Timestep  196657 | Reward:  2910.79 | Length:  48 | Avg(100):  2756.53
+
+Evaluating at timestep 200,000...
+Evaluation: 2905.80 ± 5.71
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_checkpoint_200000.pth
+Checkpoint saved: pcs_experiments/models/no_opt_iso_opt_no_disp_checkpoint_200000.pth
+Episode  4200 | Timestep  201441 | Reward:  2914.91 | Length:  48 | Avg(100):  2814.21
+Episode  4300 | Timestep  206241 | Reward:  2887.21 | Length:  48 | Avg(100):  2855.12
+Episode  4400 | Timestep  211041 | Reward:  2851.36 | Length:  48 | Avg(100):  2838.18
+Episode  4500 | Timestep  215841 | Reward:  2834.80 | Length:  48 | Avg(100):  2836.03
+
+Evaluating at timestep 220,000...
+Evaluation: 2859.92 ± 54.45
+Episode  4600 | Timestep  220625 | Reward:  2814.53 | Length:  48 | Avg(100):  2757.41
+Episode  4700 | Timestep  225425 | Reward:  2709.31 | Length:  48 | Avg(100):  2735.56
+Episode  4800 | Timestep  230225 | Reward:  2905.21 | Length:  48 | Avg(100):  2755.79
+Episode  4900 | Timestep  235025 | Reward:  2852.07 | Length:  48 | Avg(100):  2813.01
+Episode  5000 | Timestep  239825 | Reward:  2642.19 | Length:  48 | Avg(100):  2789.76
+
+Evaluating at timestep 240,000...
+Evaluation: 2806.81 ± 21.76
+Episode  5100 | Timestep  244609 | Reward:  2682.17 | Length:  48 | Avg(100):  2699.80
+Episode  5200 | Timestep  249409 | Reward:  2642.28 | Length:  48 | Avg(100):  2700.41
+Episode  5300 | Timestep  254209 | Reward:  2740.67 | Length:  48 | Avg(100):  2714.01
+Episode  5400 | Timestep  259009 | Reward:  2824.98 | Length:  48 | Avg(100):  2738.55
+
+Evaluating at timestep 260,000...
+Evaluation: 2807.86 ± 10.08
+Episode  5500 | Timestep  263793 | Reward:  2788.38 | Length:  48 | Avg(100):  2740.68
+Episode  5600 | Timestep  268593 | Reward:  2638.06 | Length:  48 | Avg(100):  2786.82
+Episode  5700 | Timestep  273393 | Reward:  2733.50 | Length:  48 | Avg(100):  2781.12
+Episode  5800 | Timestep  278193 | Reward:  2851.23 | Length:  48 | Avg(100):  2787.19
+
+Evaluating at timestep 280,000...
+Evaluation: 2756.14 ± 6.78
+Episode  5900 | Timestep  282977 | Reward:  2093.47 | Length:  48 | Avg(100):  2676.67
+Episode  6000 | Timestep  287777 | Reward:  2836.48 | Length:  48 | Avg(100):  2400.71
+Episode  6100 | Timestep  292577 | Reward:  2829.30 | Length:  48 | Avg(100):  2772.80
+Episode  6200 | Timestep  297377 | Reward:  2615.14 | Length:  48 | Avg(100):  2743.23
+
+Final evaluation...
+  Episode  1: Reward =  2608.49, Steps =  48
+  Episode  2: Reward =  2859.45, Steps =  48
+  Episode  3: Reward =  2859.45, Steps =  48
+  Episode  4: Reward =  2859.45, Steps =  48
+  Episode  5: Reward =  2859.45, Steps =  48
+  Episode  6: Reward =  2859.45, Steps =  48
+  Episode  7: Reward =  2859.45, Steps =  48
+  Episode  8: Reward =  2859.45, Steps =  48
+  Episode  9: Reward =  2859.45, Steps =  48
+  Episode 10: Reward =  2859.45, Steps =  48
+  Episode 11: Reward =  2859.45, Steps =  48
+  Episode 12: Reward =  2859.45, Steps =  48
+  Episode 13: Reward =  2859.45, Steps =  48
+  Episode 14: Reward =  2859.45, Steps =  48
+  Episode 15: Reward =  2859.45, Steps =  48
+  Episode 16: Reward =  2859.45, Steps =  48
+  Episode 17: Reward =  2859.45, Steps =  48
+  Episode 18: Reward =  2859.45, Steps =  48
+  Episode 19: Reward =  2859.45, Steps =  48
+  Episode 20: Reward =  2859.45, Steps =  48
+Model saved to pcs_experiments/models/no_opt_iso_opt_no_disp_final.pth
+
+================================================================================
+Training completed in 8772.24 seconds (2.44 hours)
+Total episodes: 6254
+Final evaluation: 2846.90 ± 54.70
+Best evaluation: 2924.51
+Models saved to: pcs_experiments/models
+================================================================================
+Results saved to: pcs_experiments/no_opt_iso_opt_no_disp_results.json
+
+Training finished at: Wed 06 Aug 2025 12:25:53 AM IDT
+✓ Training completed successfully!
+
+Results summary:
+  Results file: pcs_experiments/no_opt_iso_opt_no_disp_results.json
+
+Model files:
+  Final model: pcs_experiments/models/no_opt_iso_opt_no_disp_final.pth
+  Best model: pcs_experiments/models/no_opt_iso_opt_no_disp_best.pth
+  TensorBoard logs: pcs_experiments/logs/no_opt_iso_opt_no_disp
+  View with: tensorboard --logdir pcs_experiments/logs/no_opt_iso_opt_no_disp
+
+==========================================
+SLURM Job Summary
+==========================================
+Job ID: 324373
+Experiment: no_opt_iso_opt_no_disp
+Start time: Tue 05 Aug 2025 09:59:32 PM IDT
+End time: Wed 06 Aug 2025 12:25:53 AM IDT
+Exit code: 0
+Node: lambda1
+Working directory: /home/matan.biton/EnergyNetMultiObjectiveISOWrapper/training
+==========================================

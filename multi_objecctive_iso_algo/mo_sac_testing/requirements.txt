@@ -1,0 +1,19 @@
+# Multi-Objective SAC Requirements
+torch>=1.12.0
+numpy>=1.21.0
+gymnasium>=0.28.0
+matplotlib>=3.5.0
+tensorboard>=2.8.0
+tqdm>=4.64.0
+
+# Optional dependencies for better performance
+# torch-audio  # If needed for some environments
+# torchvision  # If needed for some environments
+
+# Development and testing
+pytest>=7.0.0
+jupyter>=1.0.0
+seaborn>=0.11.0  # For better plotting
+
+# EnergyNet dependencies (these may need to be installed separately)
+# energy-net  # Install according to EnergyNet documentation

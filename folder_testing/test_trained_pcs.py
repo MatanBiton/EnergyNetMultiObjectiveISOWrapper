@@ -15,6 +15,5 @@ import numpy as np
 
 ppo_path = "C:\\Technion\\EnergySystems\\EnergyNetMultiObjectiveISOWrapper\\best_model.zip"
 
-agent = PPOPCSAgent(ppo_path=ppo_path)
-env = MultiObjectiveISOEnv(trained_pcs_model=agent)
-env.step(np.array([0,0]))
+env = MultiObjectiveISOEnv()
+print(env.step(np.array([0,0]))[1])
